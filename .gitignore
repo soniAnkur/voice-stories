@@ -41,6 +41,9 @@ ffmpeg-api/node_modules/
 # Logs
 *.log
 
+# package lock - let Vercel generate fresh
+package-lock.json
+
 # vercel
 .vercel
 
