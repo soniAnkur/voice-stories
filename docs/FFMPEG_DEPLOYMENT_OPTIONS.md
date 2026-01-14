@@ -849,25 +849,25 @@ If you prefer ngrok (more stable URLs with paid plan):
 | FFmpeg API Code | `ffmpeg-api/` | ✅ Ready |
 | audioMixer.ts | `src/lib/audioMixer.ts` | ✅ Updated with remote support |
 | Environment Variables | `.env.local` | ✅ Configured |
-| API Key | `FFMPEG_API_KEY` | `ffmpeg-api-secret-key-2026` |
+| API Key | `FFMPEG_API_KEY` | Set in `.env.local` |
 
 ### Environment Variables Reference
 
 **In `.env.local` (voice_stories):**
 ```bash
 # FFmpeg API (VPS or Localtunnel) - for Vercel deployment
-FFMPEG_API_URL=https://your-localtunnel-or-vps-url
-FFMPEG_API_KEY=ffmpeg-api-secret-key-2026
+FFMPEG_API_URL=<your-ffmpeg-api-url>
+FFMPEG_API_KEY=<your-ffmpeg-api-key>
 ```
 
 **In `ffmpeg-api/.env`:**
 ```bash
 PORT=8080
-API_KEY=ffmpeg-api-secret-key-2026
-CLOUDFLARE_R2_ACCESS_KEY_ID=...
-CLOUDFLARE_R2_SECRET_ACCESS_KEY=...
-CLOUDFLARE_R2_ACCOUNT_ID=...
-CLOUDFLARE_R2_BUCKET_NAME=kids-storybooks-images
-CLOUDFLARE_R2_PUBLIC_URL=https://pub-fdad8a04816c488a940287c7ac94f0e7.r2.dev
-ALLOWED_ORIGINS=https://voice-stories.vercel.app,http://localhost:3000
+API_KEY=<your-api-key>
+CLOUDFLARE_R2_ACCESS_KEY_ID=<your-r2-access-key>
+CLOUDFLARE_R2_SECRET_ACCESS_KEY=<your-r2-secret-key>
+CLOUDFLARE_R2_ACCOUNT_ID=<your-r2-account-id>
+CLOUDFLARE_R2_BUCKET_NAME=<your-bucket-name>
+CLOUDFLARE_R2_PUBLIC_URL=<your-r2-public-url>
+ALLOWED_ORIGINS=https://your-app.vercel.app,http://localhost:3000
 ```

@@ -262,21 +262,21 @@ voice-bedtime-tales/
 # .env.local
 
 # MongoDB (REQUIRED)
-MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/voice_stories
+MONGODB_URI=<your-mongodb-connection-string>
 
 # Vercel Blob (auto-created on deploy)
 BLOB_READ_WRITE_TOKEN=
 
 # ElevenLabs (CONFIGURED ✅)
-ELEVENLABS_API_KEY=sk_xxxxx
+ELEVENLABS_API_KEY=<your-elevenlabs-api-key>
 
 # Google Gemini (CONFIGURED ✅)
-GEMINI_API_KEY=AIzaSyxxxxx
+GEMINI_API_KEY=<your-gemini-api-key>
 
 # Stripe (optional if BYPASS_PAYMENT=true)
-STRIPE_SECRET_KEY=sk_test_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
+STRIPE_SECRET_KEY=<your-stripe-secret-key>
+STRIPE_WEBHOOK_SECRET=<your-stripe-webhook-secret>
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=<your-stripe-publishable-key>
 STRIPE_PRICE_ID=price_...
 
 # App
