@@ -38,6 +38,9 @@ ffmpeg-api/node_modules/
 .vscode/
 .idea/
 
+# Claude Code
+.claude/
+
 # Logs
 *.log
 

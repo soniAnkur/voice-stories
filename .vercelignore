@@ -1,0 +1,8 @@
+# Don't upload these to Vercel
+.claude/
+ffmpeg-api/
+docs/
+*.md
+!README.md
+.git/
+.gitignore
