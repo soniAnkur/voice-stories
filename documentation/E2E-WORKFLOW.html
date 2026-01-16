@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Bedtime Tales - End-to-End Workflow</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .toc {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 40px;
+        }
+
+        .toc h2 {
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+
+        .toc ul {
+            list-style: none;
+        }
+
+        .toc li {
+            margin: 10px 0;
+        }
+
+        .toc a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .toc a:hover {
+            color: #764ba2;
+            padding-left: 10px;
+        }
+
+        .section {
+            margin: 60px 0;
+        }
+
+        .section h2 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .section h3 {
+            font-size: 1.8em;
+            margin: 30px 0 15px;
+            color: #764ba2;
+        }
+
+        .flow-step {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 30px;
+            border-radius: 15px;
+            margin: 20px 0;
+            border-left: 5px solid #667eea;
+            position: relative;
+        }
+
+        .flow-step::before {
+            content: attr(data-step);
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .flow-step h4 {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .flow-arrow {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 2em;
+            color: #667eea;
+        }
+
+        .code-block {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .code-block .keyword {
+            color: #c678dd;
+        }
+
+        .code-block .string {
+            color: #98c379;
+        }
+
+        .code-block .number {
+            color: #d19a66;
+        }
+
+        .code-block .comment {
+            color: #5c6370;
+            font-style: italic;
+        }
+
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: #667eea;
+            transform: translateX(-50%);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin: 40px 0;
+            width: 45%;
+        }
+
+        .timeline-item.left {
+            margin-left: 0;
+            margin-right: auto;
+        }
+
+        .timeline-item.right {
+            margin-left: auto;
+            margin-right: 0;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #667eea;
+            border: 4px solid white;
+            border-radius: 50%;
+            top: 20px;
+        }
+
+        .timeline-item.left::before {
+            right: -60px;
+        }
+
+        .timeline-item.right::before {
+            left: -60px;
+        }
+
+        .timeline-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            border: 2px solid #667eea;
+        }
+
+        .timeline-content h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .data-flow {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 20px;
+            align-items: center;
+            margin: 30px 0;
+        }
+
+        .data-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .data-box h5 {
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .arrow-right {
+            font-size: 2em;
+            color: #667eea;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .info-card {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .info-card h5 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .info-card p {
+            color: #666;
+            font-size: 0.95em;
+        }
+
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .tech-badge {
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 500;
+            font-size: 0.9em;
+        }
+
+        .processing-time {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .processing-time strong {
+            color: #856404;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+        }
+
+        table th {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            text-align: left;
+        }
+
+        table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .highlight-box {
+            background: #e7f3ff;
+            border-left: 5px solid #2196F3;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border-left: 5px solid #ffc107;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .success-box {
+            background: #d4edda;
+            border-left: 5px solid #28a745;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2em;
+            }
+
+            .timeline::before {
+                left: 20px;
+            }
+
+            .timeline-item {
+                width: 100%;
+                margin-left: 40px !important;
+            }
+
+            .timeline-item::before {
+                left: -30px !important;
+            }
+
+            .data-flow {
+                grid-template-columns: 1fr;
+            }
+
+            .arrow-right {
+                transform: rotate(90deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎙️ Voice Bedtime Tales</h1>
+            <p>End-to-End Workflow Documentation</p>
+        </header>
+
+        <div class="content">
+            <!-- Table of Contents -->
+            <div class="toc">
+                <h2>📋 Table of Contents</h2>
+                <ul>
+                    <li><a href="#overview">1. Workflow Overview</a></li>
+                    <li><a href="#email-children">2. Email Entry & Children List</a></li>
+                    <li><a href="#voice-recording">3. Voice Recording & Cloning</a></li>
+                    <li><a href="#preview-generation">4. Preview Story Generation</a></li>
+                    <li><a href="#payment">5. Payment Process</a></li>
+                    <li><a href="#full-generation">6. Full Story Generation</a></li>
+                    <li><a href="#library">7. Library Access</a></li>
+                    <li><a href="#technical">8. Technical Details</a></li>
+                </ul>
+            </div>
+
+            <!-- Section 1: Overview -->
+            <div class="section" id="overview">
+                <h2>1. Workflow Overview</h2>
+
+                <div class="highlight-box">
+                    <h4>🎯 User Journey</h4>
+                    <p>From email entry to personalized bedtime story playback in 7 simple steps.</p>
+                </div>
+
+                <div class="flow-step" data-step="START">
+                    <h4>User Enters Email</h4>
+                    <p>Parent/caregiver provides email address to begin the journey.</p>
+                </div>
+
+                <div class="flow-arrow">↓</div>
+
+                <div class="flow-step" data-step="STEP 1">
+                    <h4>Children List Retrieved</h4>
+                    <p>System fetches previous children from past stories (if any).</p>
+                </div>
+
+                <div class="flow-arrow">↓</div>
+
+                <div class="flow-step" data-step="STEP 2">
+                    <h4>Voice Recording & Cloning</h4>
+                    <p>User records 30-60 second voice sample → ElevenLabs clones voice.</p>
+                </div>
+
+                <div class="flow-arrow">↓</div>
+
+                <div class="flow-step" data-step="STEP 3">
+                    <h4>Child Details & Theme Selection</h4>
+                    <p>Enter child's name, age, interests, and choose story theme.</p>
+                </div>
+
+                <div class="flow-arrow">↓</div>
+
+                <div class="flow-step" data-step="STEP 4">
+                    <h4>Preview Story Generation (30 seconds)</h4>
+                    <p>AI generates story → TTS narration → Music added → Mixed audio.</p>
+                </div>
+
+                <div class="flow-arrow">↓</div>
+
+                <div class="flow-step" data-step="STEP 5">
+                    <h4>Payment Process</h4>
+                    <p>User pays via Stripe (or payment bypassed in dev mode).</p>
+                </div>
+
+                <div class="flow-arrow">↓</div>
+
+                <div class="flow-step" data-step="STEP 6">
+                    <h4>Full Story Generation (10 minutes)</h4>
+                    <p>Complete story generated with professional audio mixing.</p>
+                </div>
+
+                <div class="flow-arrow">↓</div>
+
+                <div class="flow-step" data-step="STEP 7">
+                    <h4>Library Access</h4>
+                    <p>All stories organized by voice into playable albums.</p>
+                </div>
+
+                <div class="flow-arrow">↓</div>
+
+                <div class="flow-step" data-step="END">
+                    <h4>✨ Story Playback</h4>
+                    <p>Child falls asleep to parent's voice telling personalized bedtime tale.</p>
+                </div>
+            </div>
+
+            <!-- Section 2: Email & Children -->
+            <div class="section" id="email-children">
+                <h2>2. Email Entry & Children List</h2>
+
+                <h3>User Action</h3>
+                <p>User enters their email address and clicks "Continue".</p>
+
+                <h3>Data Flow</h3>
+                <div class="data-flow">
+                    <div class="data-box">
+                        <h5>Frontend</h5>
+                        <p>src/app/page.tsx</p>
+                        <code>POST /api/children</code>
+                    </div>
+                    <div class="arrow-right">→</div>
+                    <div class="data-box">
+                        <h5>Backend</h5>
+                        <p>src/app/api/children/route.ts</p>
+                        <p>MongoDB Query</p>
+                    </div>
+                </div>
+
+                <h3>Backend Processing</h3>
+                <div class="code-block">
+<span class="comment">// 1. Find user by email</span>
+<span class="keyword">const</span> user = <span class="keyword">await</span> User.findOne({
+    email: email.toLowerCase()
+});
+
+<span class="comment">// 2. Fetch all stories for user</span>
+<span class="keyword">const</span> stories = <span class="keyword">await</span> Story.find({
+    userId: user._id
+}).sort({ createdAt: <span class="number">-1</span> });
+
+<span class="comment">// 3. Extract unique children</span>
+<span class="keyword">const</span> childrenMap = <span class="keyword">new</span> Map();
+stories.forEach(story => {
+    <span class="keyword">const</span> key = `${story.childName}_${story.childAge}`;
+    <span class="keyword">if</span> (!childrenMap.has(key)) {
+        childrenMap.set(key, {
+            childName: story.childName,
+            childAge: story.childAge,
+            interests: story.interests,
+            storyCount: <span class="number">1</span>
+        });
+    }
+});
+                </div>
+
+                <h3>API Response</h3>
+                <div class="code-block">
+{
+    <span class="string">"success"</span>: <span class="keyword">true</span>,
+    <span class="string">"hasUser"</span>: <span class="keyword">true</span>,
+    <span class="string">"userId"</span>: <span class="string">"65a1b2c3d4e5f6g7h8i9j0k1"</span>,
+    <span class="string">"hasVoice"</span>: <span class="keyword">true</span>,
+    <span class="string">"children"</span>: [
+        {
+            <span class="string">"childName"</span>: <span class="string">"Emma"</span>,
+            <span class="string">"childAge"</span>: <span class="number">5</span>,
+            <span class="string">"interests"</span>: <span class="string">"dinosaurs, dragons"</span>,
+            <span class="string">"storyCount"</span>: <span class="number">3</span>
+        }
+    ]
+}
+                </div>
+
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h5>📁 Collections Used</h5>
+                        <p><strong>users:</strong> Lookup by email<br>
+                        <strong>stories:</strong> Extract children data</p>
+                    </div>
+                    <div class="info-card">
+                        <h5>⚡ Performance</h5>
+                        <p>Indexed query on email field<br>
+                        Response time: ~50-100ms</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 3: Voice Recording -->
+            <div class="section" id="voice-recording">
+                <h2>3. Voice Recording & Cloning</h2>
+
+                <h3>Recording Process</h3>
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h5>🎤 Recording</h5>
+                        <p>Browser MediaRecorder API<br>
+                        Duration: 30-60 seconds<br>
+                        Format: WebM/MP3</p>
+                    </div>
+                    <div class="info-card">
+                        <h5>☁️ Upload</h5>
+                        <p>Cloudflare R2 Storage<br>
+                        Path: voice-samples/[filename].mp3</p>
+                    </div>
+                    <div class="info-card">
+                        <h5>🧬 Clone</h5>
+                        <p>ElevenLabs API v3<br>
+                        Endpoint: /v1/voices/add</p>
+                    </div>
+                </div>
+
+                <h3>Voice Cloning Flow</h3>
+                <div class="timeline">
+                    <div class="timeline-item left">
+                        <div class="timeline-content">
+                            <h4>1. Upload Sample</h4>
+                            <p>Audio buffer sent to Cloudflare R2</p>
+                            <div class="processing-time">
+                                <strong>Time:</strong> 1-2 seconds
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item right">
+                        <div class="timeline-content">
+                            <h4>2. Fetch & Convert</h4>
+                            <p>Backend fetches audio and converts to Buffer</p>
+                            <div class="processing-time">
+                                <strong>Time:</strong> 0.5-1 second
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item left">
+                        <div class="timeline-content">
+                            <h4>3. ElevenLabs Clone</h4>
+                            <p>POST to /v1/voices/add with audio FormData</p>
+                            <div class="processing-time">
+                                <strong>Time:</strong> 5-10 seconds
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item right">
+                        <div class="timeline-content">
+                            <h4>4. Save Voice ID</h4>
+                            <p>Store elevenlabsVoiceId in User document</p>
+                            <div class="processing-time">
+                                <strong>Time:</strong> ~100ms
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="success-box">
+                    <strong>✅ Result:</strong> Voice ID saved to database and ready for story generation!
+                </div>
+            </div>
+
+            <!-- Section 4: Preview Generation -->
+            <div class="section" id="preview-generation">
+                <h2>4. Preview Story Generation</h2>
+
+                <h3>Complete Pipeline (30-second preview)</h3>
+
+                <div class="flow-step" data-step="1">
+                    <h4>Story Text Generation</h4>
+                    <p><strong>Service:</strong> Google Gemini 2.0 Flash</p>
+                    <p><strong>Prompt:</strong> Create 30-second preview (~100 words) for [childName], age [childAge], interests: [interests], theme: [theme]</p>
+                    <p><strong>Output:</strong> Story text with audio tags + background music prompt</p>
+                    <div class="processing-time">
+                        <strong>Processing Time:</strong> 2-4 seconds
+                    </div>
+                </div>
+
+                <div class="flow-arrow">↓</div>
+
+                <div class="flow-step" data-step="2">
+                    <h4>Text-to-Speech</h4>
+                    <p><strong>Service:</strong> ElevenLabs API v3</p>
+                    <p><strong>Voice:</strong> Cloned parent voice</p>
+                    <p><strong>Settings:</strong> Speed 0.7x (slowest), Stability 0.5, Similarity 0.75</p>
+                    <p><strong>Output:</strong> MP3 narration buffer</p>
+                    <div class="processing-time">
+                        <strong>Processing Time:</strong> 3-5 seconds
+                    </div>
+                </div>
+
+                <div class="flow-arrow">↓</div>
+
+                <div class="flow-step" data-step="3">
+                    <h4>Background Music Selection</h4>
+                    <p><strong>Option A:</strong> Mubert AI (if API key set) - Generate custom track</p>
+                    <p><strong>Option B:</strong> Curated Library - Score 10 tracks and select best match</p>
+                    <p><strong>Output:</strong> Music MP3 URL</p>
+                    <div class="processing-time">
+                        <strong>Processing Time:</strong> 1-3 seconds
+                    </div>
+                </div>
+
+                <div class="flow-arrow">↓</div>
+
+                <div class="flow-step" data-step="4">
+                    <h4>Audio Mixing (FFmpeg)</h4>
+                    <p><strong>Process:</strong></p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>Voice: Apply lowpass filter + double echo (dreamy effects)</li>
+                        <li>Music: Loop, trim to 60s, fade in/out</li>
+                        <li>Sidechain compression: Music ducks when voice speaks</li>
+                        <li>Loudness normalization: -16 LUFS</li>
+                    </ul>
+                    <p><strong>Output:</strong> Professional mixed MP3 (192kbps, stereo)</p>
+                    <div class="processing-time">
+                        <strong>Processing Time:</strong> 5-15 seconds
+                    </div>
+                </div>
+
+                <div class="flow-arrow">↓</div>
+
+                <div class="flow-step" data-step="5">
+                    <h4>Upload to Storage</h4>
+                    <p><strong>Service:</strong> Cloudflare R2</p>
+                    <p><strong>Path:</strong> voice-stories/stories/preview/[filename].mp3</p>
+                    <p><strong>Output:</strong> Public URL</p>
+                    <div class="processing-time">
+                        <strong>Processing Time:</strong> 1-2 seconds
+                    </div>
+                </div>
+
+                <div class="flow-arrow">↓</div>
+
+                <div class="flow-step" data-step="6">
+                    <h4>Save to Database</h4>
+                    <p><strong>Collection:</strong> stories</p>
+                    <p><strong>Fields:</strong> childName, childAge, interests, theme, previewUrl, status: "preview"</p>
+                    <div class="processing-time">
+                        <strong>Processing Time:</strong> ~100ms
+                    </div>
+                </div>
+
+                <div class="success-box">
+                    <strong>✅ Total Time:</strong> 15-30 seconds<br>
+                    <strong>🎵 Result:</strong> 30-second preview ready to play!
+                </div>
+
+                <h3>Technology Stack for Preview</h3>
+                <div class="tech-stack">
+                    <span class="tech-badge">Google Gemini 2.0 Flash</span>
+                    <span class="tech-badge">ElevenLabs API v3</span>
+                    <span class="tech-badge">Mubert API / Curated Library</span>
+                    <span class="tech-badge">FFmpeg</span>
+                    <span class="tech-badge">Cloudflare R2</span>
+                    <span class="tech-badge">MongoDB</span>
+                </div>
+            </div>
+
+            <!-- Section 5: Payment -->
+            <div class="section" id="payment">
+                <h2>5. Payment Process</h2>
+
+                <h3>Payment Flow</h3>
+                <div class="data-flow">
+                    <div class="data-box">
+                        <h5>User</h5>
+                        <p>Clicks "Generate Full Story"</p>
+                    </div>
+                    <div class="arrow-right">→</div>
+                    <div class="data-box">
+                        <h5>Stripe Checkout</h5>
+                        <p>Payment processing</p>
+                    </div>
+                    <div class="arrow-right">→</div>
+                    <div class="data-box">
+                        <h5>Webhook</h5>
+                        <p>Update story status</p>
+                    </div>
+                </div>
+
+                <h3>API Endpoints</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Endpoint</th>
+                            <th>Purpose</th>
+                            <th>Response</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>POST /api/checkout</code></td>
+                            <td>Create Stripe session</td>
+                            <td>Redirect URL to Stripe</td>
+                        </tr>
+                        <tr>
+                            <td><code>POST /api/webhook</code></td>
+                            <td>Handle payment completion</td>
+                            <td>Update story status to "paid"</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="warning-box">
+                    <strong>⚠️ Development Mode:</strong> Set <code>BYPASS_PAYMENT=true</code> to skip payment and immediately generate full story.
+                </div>
+            </div>
+
+            <!-- Section 6: Full Generation -->
+            <div class="section" id="full-generation">
+                <h2>6. Full Story Generation</h2>
+
+                <h3>10-Minute Story Pipeline</h3>
+
+                <div class="flow-step" data-step="1">
+                    <h4>Verify Payment</h4>
+                    <p>Check story status is "paid" or BYPASS_PAYMENT enabled</p>
+                </div>
+
+                <div class="flow-arrow">↓</div>
+
+                <div class="flow-step" data-step="2">
+                    <h4>Generate Full Story Text</h4>
+                    <p><strong>Service:</strong> Google Gemini 2.0 Flash</p>
+                    <p><strong>Word Count:</strong> 1400-1600 words (NON-NEGOTIABLE)</p>
+                    <p><strong>Structure:</strong> HOOK (5%) → SETUP (15%) → ADVENTURE (50%) → CLIMAX (15%) → RESOLUTION (10%) → WIND-DOWN (5%)</p>
+                    <div class="processing-time">
+                        <strong>Processing Time:</strong> 5-10 seconds
+                    </div>
+                </div>
+
+                <div class="flow-arrow">↓</div>
+
+                <div class="flow-step" data-step="3">
+                    <h4>Text-to-Speech (Long Form)</h4>
+                    <p><strong>Input:</strong> 1400-1600 words with audio tags</p>
+                    <p><strong>Output:</strong> ~10-minute MP3 narration at 0.7x speed</p>
+                    <div class="processing-time">
+                        <strong>Processing Time:</strong> 30-60 seconds
+                    </div>
+                </div>
+
+                <div class="flow-arrow">↓</div>
+
+                <div class="flow-step" data-step="4">
+                    <h4>Background Music (10 minutes)</h4>
+                    <p>Same process as preview, but 600-second duration</p>
+                    <div class="processing-time">
+                        <strong>Processing Time:</strong> 1-3 seconds
+                    </div>
+                </div>
+
+                <div class="flow-arrow">↓</div>
+
+                <div class="flow-step" data-step="5">
+                    <h4>Audio Mixing (Extended)</h4>
+                    <p><strong>Duration:</strong> 600 seconds (10 minutes)</p>
+                    <p><strong>Fade In:</strong> 2 seconds</p>
+                    <p><strong>Fade Out:</strong> 3 seconds</p>
+                    <p>Same professional mixing as preview</p>
+                    <div class="processing-time">
+                        <strong>Processing Time:</strong> 20-45 seconds
+                    </div>
+                </div>
+
+                <div class="flow-arrow">↓</div>
+
+                <div class="flow-step" data-step="6">
+                    <h4>Upload Full Audio</h4>
+                    <p><strong>Path:</strong> voice-stories/stories/full/[filename].mp3</p>
+                    <p><strong>File Size:</strong> ~15-20 MB</p>
+                    <div class="processing-time">
+                        <strong>Processing Time:</strong> 5-10 seconds
+                    </div>
+                </div>
+
+                <div class="flow-arrow">↓</div>
+
+                <div class="flow-step" data-step="7">
+                    <h4>Update Database</h4>
+                    <p><strong>Update:</strong> fullAudioUrl, storyText, status: "complete"</p>
+                </div>
+
+                <div class="success-box">
+                    <strong>✅ Total Time:</strong> 60-120 seconds (1-2 minutes)<br>
+                    <strong>🎵 Result:</strong> Professional 10-minute bedtime story ready!
+                </div>
+            </div>
+
+            <!-- Section 7: Library -->
+            <div class="section" id="library">
+                <h2>7. Library Access</h2>
+
+                <h3>Album Organization</h3>
+                <p>Stories are grouped into <strong>albums by voice ID</strong> (ElevenLabs voice).</p>
+
+                <h3>Data Flow: Album List</h3>
+                <div class="data-flow">
+                    <div class="data-box">
+                        <h5>Frontend</h5>
+                        <p>GET /api/library/albums</p>
+                    </div>
+                    <div class="arrow-right">→</div>
+                    <div class="data-box">
+                        <h5>MongoDB Aggregation</h5>
+                        <p>Group by voiceId<br>Count stories<br>Get cover art</p>
+                    </div>
+                    <div class="arrow-right">→</div>
+                    <div class="data-box">
+                        <h5>Response</h5>
+                        <p>Albums with metadata</p>
+                    </div>
+                </div>
+
+                <h3>MongoDB Aggregation Pipeline</h3>
+                <div class="code-block">
+Story.aggregate([
+    <span class="comment">// 1. Match completed stories</span>
+    { $match: {
+        status: <span class="string">"complete"</span>,
+        fullAudioUrl: { $exists: <span class="keyword">true</span> }
+    }},
+
+    <span class="comment">// 2. Join with users</span>
+    { $lookup: {
+        from: <span class="string">"users"</span>,
+        localField: <span class="string">"userId"</span>,
+        foreignField: <span class="string">"_id"</span>,
+        as: <span class="string">"user"</span>
+    }},
+
+    <span class="comment">// 3. Compute effective voice ID</span>
+    { $addFields: {
+        effectiveVoiceId: {
+            $ifNull: [<span class="string">"$voiceId"</span>, <span class="string">"$user.elevenlabsVoiceId"</span>]
+        }
+    }},
+
+    <span class="comment">// 4. Group by voice ID</span>
+    { $group: {
+        _id: <span class="string">"$effectiveVoiceId"</span>,
+        storyCount: { $sum: <span class="number">1</span> },
+        latestStoryDate: { $max: <span class="string">"$createdAt"</span> },
+        coverStories: { $push: {
+            _id: <span class="string">"$_id"</span>,
+            theme: <span class="string">"$theme"</span>,
+            childName: <span class="string">"$childName"</span>
+        }}
+    }},
+
+    <span class="comment">// 5. Sort by latest</span>
+    { $sort: { latestStoryDate: <span class="number">-1</span> } }
+])
+                </div>
+
+                <h3>Album Details</h3>
+                <p>Click album → <code>GET /api/library/albums/[voiceId]</code></p>
+                <p>Returns all stories for that voice with full metadata.</p>
+
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h5>🎵 Album Concept</h5>
+                        <p>All stories narrated in the same voice are grouped together, like a music album.</p>
+                    </div>
+                    <div class="info-card">
+                        <h5>🎨 Cover Art</h5>
+                        <p>First 4 stories provide cover images based on their themes.</p>
+                    </div>
+                    <div class="info-card">
+                        <h5>▶️ Playback</h5>
+                        <p>Continuous playback queue for multiple stories.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 8: Technical Details -->
+            <div class="section" id="technical">
+                <h2>8. Technical Details</h2>
+
+                <h3>Complete Technology Stack</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Component</th>
+                            <th>Technology</th>
+                            <th>Purpose</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Frontend</td>
+                            <td>Next.js 16.1.1 + React 19</td>
+                            <td>Web application</td>
+                        </tr>
+                        <tr>
+                            <td>Database</td>
+                            <td>MongoDB + Mongoose</td>
+                            <td>User & story data</td>
+                        </tr>
+                        <tr>
+                            <td>Storage</td>
+                            <td>Cloudflare R2</td>
+                            <td>Audio files</td>
+                        </tr>
+                        <tr>
+                            <td>Story Generation</td>
+                            <td>Google Gemini 2.0 Flash</td>
+                            <td>AI story text</td>
+                        </tr>
+                        <tr>
+                            <td>Voice Cloning</td>
+                            <td>ElevenLabs API v3</td>
+                            <td>Voice clone + TTS</td>
+                        </tr>
+                        <tr>
+                            <td>Music Generation</td>
+                            <td>Mubert AI (optional)</td>
+                            <td>Custom music tracks</td>
+                        </tr>
+                        <tr>
+                            <td>Audio Mixing</td>
+                            <td>FFmpeg</td>
+                            <td>Professional mixing</td>
+                        </tr>
+                        <tr>
+                            <td>Payments</td>
+                            <td>Stripe</td>
+                            <td>Checkout & webhooks</td>
+                        </tr>
+                        <tr>
+                            <td>Hosting</td>
+                            <td>Vercel</td>
+                            <td>Serverless deployment</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Database Schema</h3>
+
+                <h4>Users Collection</h4>
+                <div class="code-block">
+{
+    _id: ObjectId,
+    email: String <span class="comment">(unique, indexed)</span>,
+    elevenlabsVoiceId: String,
+    stripeCustomerId: String,
+    createdAt: Date,
+    updatedAt: Date
+}
+                </div>
+
+                <h4>Stories Collection</h4>
+                <div class="code-block">
+{
+    _id: ObjectId,
+    userId: ObjectId <span class="comment">(ref: User)</span>,
+    voiceId: String,
+    childName: String,
+    childAge: Number,
+    interests: String,
+    theme: String,
+    previewText: String,
+    storyText: String,
+    previewUrl: String,
+    fullAudioUrl: String,
+    backgroundMusicPrompt: String,
+    musicSource: <span class="string">"library"</span> | <span class="string">"mubert"</span>,
+    status: <span class="string">"preview"</span> | <span class="string">"paid"</span> | <span class="string">"generating"</span> | <span class="string">"complete"</span>,
+    stripeSessionId: String,
+    createdAt: Date,
+    updatedAt: Date
+}
+                </div>
+
+                <h3>Performance Metrics</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Process</th>
+                            <th>Preview (30s)</th>
+                            <th>Full Story (10min)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Story Generation</td>
+                            <td>2-4 seconds</td>
+                            <td>5-10 seconds</td>
+                        </tr>
+                        <tr>
+                            <td>Text-to-Speech</td>
+                            <td>3-5 seconds</td>
+                            <td>30-60 seconds</td>
+                        </tr>
+                        <tr>
+                            <td>Music Selection</td>
+                            <td>1-3 seconds</td>
+                            <td>1-3 seconds</td>
+                        </tr>
+                        <tr>
+                            <td>Audio Mixing</td>
+                            <td>5-15 seconds</td>
+                            <td>20-45 seconds</td>
+                        </tr>
+                        <tr>
+                            <td>Storage Upload</td>
+                            <td>1-2 seconds</td>
+                            <td>5-10 seconds</td>
+                        </tr>
+                        <tr>
+                            <td><strong>TOTAL</strong></td>
+                            <td><strong>15-30 seconds</strong></td>
+                            <td><strong>60-120 seconds</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Key Features</h3>
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h5>🎙️ Voice Cloning</h5>
+                        <p>30-60 second sample creates lifetime cloned voice</p>
+                    </div>
+                    <div class="info-card">
+                        <h5>🤖 AI Stories</h5>
+                        <p>Unique, personalized narratives every time</p>
+                    </div>
+                    <div class="info-card">
+                        <h5>🎵 Smart Music</h5>
+                        <p>Intelligent matching to story theme and mood</p>
+                    </div>
+                    <div class="info-card">
+                        <h5>🎚️ Pro Audio</h5>
+                        <p>Sidechain compression, dreamy effects, normalization</p>
+                    </div>
+                    <div class="info-card">
+                        <h5>💤 Sleep-Optimized</h5>
+                        <p>0.7x speed narration induces calm and sleep</p>
+                    </div>
+                    <div class="info-card">
+                        <h5>📚 Library</h5>
+                        <p>Organized albums for easy access and replay</p>
+                    </div>
+                </div>
+
+                <div class="success-box">
+                    <strong>✨ Result:</strong> Professional, personalized bedtime stories that help children fall asleep to the comforting sound of a parent's voice.
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div style="text-align: center; padding: 40px 0; border-top: 2px solid #e9ecef; margin-top: 60px;">
+                <p style="color: #666; font-size: 0.9em;">
+                    Voice Bedtime Tales - End-to-End Workflow Documentation<br>
+                    Last Updated: January 14, 2026<br>
+                    <a href="../README.md" style="color: #667eea; text-decoration: none;">← Back to Main Documentation</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
