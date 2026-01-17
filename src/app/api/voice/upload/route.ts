@@ -4,6 +4,9 @@ import { User } from "@/models/User";
 import { uploadVoiceSample } from "@/lib/blob";
 import { cloneVoice } from "@/lib/elevenlabs";
 
+// Voice cloning can take 10-30s
+export const maxDuration = 60;
+
 export async function POST(request: Request) {
   try {
     const { audio, userId } = await request.json();

@@ -8,6 +8,9 @@ import { uploadAudio } from "@/lib/blob";
 import { getBackgroundMusic } from "@/lib/music";
 import { mixNarrationWithMusic, isFFmpegAvailable } from "@/lib/audioMixer";
 
+// Story generation involves Gemini + ElevenLabs + storage which can take 30-60s
+export const maxDuration = 60;
+
 export async function POST(request: Request) {
   try {
     const { userId, voiceSampleUrl, email, childName, childAge, interests, theme, voiceId, customPrompt } =
