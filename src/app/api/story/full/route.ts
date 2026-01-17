@@ -9,6 +9,9 @@ import { Features } from "@/lib/features";
 import { getBackgroundMusic } from "@/lib/music";
 import { mixNarrationWithMusic, isFFmpegAvailable } from "@/lib/audioMixer";
 
+// Full story generation with 10-min audio can take several minutes
+export const maxDuration = 300;
+
 export async function POST(request: Request) {
   try {
     const { storyId, bypassPayment } = await request.json();

@@ -42,6 +42,7 @@ export default function Home() {
   const [animating, setAnimating] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [hasExistingVoice, setHasExistingVoice] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Children state
   const [children, setChildren] = useState<ChildInfo[]>([]);
@@ -186,6 +187,7 @@ export default function Home() {
   };
 
   const createStoryWithVoiceId = async () => {
+    setError(null);
     try {
       const res = await fetch("/api/story/preview", {
         method: "POST",
@@ -201,13 +203,17 @@ export default function Home() {
       const result = await res.json();
       if (result.storyId) {
         window.location.href = `/preview/${result.storyId}`;
+      } else if (result.error) {
+        setError(result.error);
       }
-    } catch (error) {
-      console.error("Error creating story:", error);
+    } catch (err) {
+      console.error("Error creating story:", err);
+      setError("Failed to create story. Please try again.");
     }
   };
 
   const createStory = async (uid: string, voiceSampleUrl: string | null) => {
+    setError(null);
     try {
       const res = await fetch("/api/story/preview", {
         method: "POST",
@@ -225,9 +231,12 @@ export default function Home() {
       const result = await res.json();
       if (result.storyId) {
         window.location.href = `/preview/${result.storyId}`;
+      } else if (result.error) {
+        setError(result.error);
       }
-    } catch (error) {
-      console.error("Error creating story:", error);
+    } catch (err) {
+      console.error("Error creating story:", err);
+      setError("Failed to create story. Please try again.");
     }
   };
 
@@ -558,23 +567,41 @@ export default function Home() {
                 <div className={`step-content ${getAnimationClass()}`}>
                   <div className="flex-1 flex flex-col items-center justify-center max-w-md mx-auto w-full">
                     <div className="glass-card p-10 text-center w-full">
-                      <div className="mb-6">
-                        <div className="relative inline-block">
-                          <div className="spinner mx-auto" style={{ width: 56, height: 56, borderWidth: 4 }} />
-                          <span className="absolute inset-0 flex items-center justify-center text-2xl animate-pulse-soft">
-                            ✨
-                          </span>
-                        </div>
-                      </div>
-                      <h2 className="text-xl font-bold mb-2">Creating Your Preview</h2>
-                      <p className="text-secondary text-sm">
-                        {hasExistingVoice
-                          ? "Using your saved voice..."
-                          : "Cloning your voice and generating story..."}
-                      </p>
-                      <p className="text-xs text-tertiary mt-4">
-                        This takes about 30 seconds
-                      </p>
+                      {error ? (
+                        <>
+                          <div className="mb-6">
+                            <span className="text-5xl">😔</span>
+                          </div>
+                          <h2 className="text-xl font-bold mb-2 text-red-600">Something went wrong</h2>
+                          <p className="text-secondary text-sm mb-4">{error}</p>
+                          <button
+                            onClick={() => { setError(null); goToStep(3); }}
+                            className="btn-primary"
+                          >
+                            Try Again
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <div className="mb-6">
+                            <div className="relative inline-block">
+                              <div className="spinner mx-auto" style={{ width: 56, height: 56, borderWidth: 4 }} />
+                              <span className="absolute inset-0 flex items-center justify-center text-2xl animate-pulse-soft">
+                                ✨
+                              </span>
+                            </div>
+                          </div>
+                          <h2 className="text-xl font-bold mb-2">Creating Your Preview</h2>
+                          <p className="text-secondary text-sm">
+                            {hasExistingVoice
+                              ? "Using your saved voice..."
+                              : "Cloning your voice and generating story..."}
+                          </p>
+                          <p className="text-xs text-tertiary mt-4">
+                            This takes about 30 seconds
+                          </p>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
