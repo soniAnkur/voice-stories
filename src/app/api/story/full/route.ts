@@ -80,13 +80,15 @@ export async function POST(request: Request) {
         elevenlabsVoiceId
       );
 
-      // Try to mix with background music if FFmpeg is available
+      // Try to mix with background music (local FFmpeg or remote API)
       let finalAudioBuffer = narrationBuffer;
       let musicSource: "library" | "mubert" | undefined;
       let hasMusicMixed = false;
 
       const ffmpegAvailable = await isFFmpegAvailable();
-      if (ffmpegAvailable) {
+      const hasRemoteApi = !!process.env.FFMPEG_API_URL;
+
+      if (ffmpegAvailable || hasRemoteApi) {
         try {
           // Get background music
           const musicResult = await getBackgroundMusic(
@@ -116,7 +118,7 @@ export async function POST(request: Request) {
           // Continue with narration-only audio
         }
       } else {
-        console.warn("FFmpeg not available, skipping music mixing");
+        console.warn("FFmpeg not available (no local or remote), skipping music mixing");
       }
 
       // Upload final audio to Vercel Blob with meaningful filename
