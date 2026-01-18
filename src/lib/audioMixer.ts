@@ -93,6 +93,15 @@ async function mixNarrationWithMusicRemote(
   );
 
   console.log(`[AudioMixer] Uploaded narration to: ${narrationUrl}`);
+
+  // Convert relative music URL to absolute URL for VPS access
+  let absoluteMusicUrl = musicUrl;
+  if (musicUrl.startsWith("/")) {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://voicestories.vercel.app";
+    absoluteMusicUrl = `${appUrl}${musicUrl}`;
+  }
+
+  console.log(`[AudioMixer] Music URL: ${absoluteMusicUrl}`);
   console.log(`[AudioMixer] Calling remote FFmpeg API: ${apiUrl}/api/mix`);
 
   const response = await fetch(`${apiUrl}/api/mix`, {
@@ -103,7 +112,7 @@ async function mixNarrationWithMusicRemote(
     },
     body: JSON.stringify({
       narrationUrl,
-      musicUrl,
+      musicUrl: absoluteMusicUrl,
       musicVolume,
       fadeInDuration,
       fadeOutDuration,
