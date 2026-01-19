@@ -66,20 +66,37 @@ function buildFilterComplex(options) {
 
   const filters = [];
 
-  // Voice processing
+  // Voice processing - split into two outputs for ducking
   if (applyDreamyEffects) {
-    // Apply dreamy effects: lowpass filter + echo/reverb
-    filters.push(
-      `[0:a]lowpass=f=8000,` +
-      `aecho=0.8:0.5:100|200|300:0.5|0.35|0.2,` +
-      `aecho=0.8:0.4:500|700:0.3|0.2,` +
-      `aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo[voice]`
-    );
+    // Apply subtle dreamy effects: gentle lowpass + light reverb
+    // Reduced echo for clearer voice while keeping warmth
+    // Split output: one for sidechain, one for final mix
+    if (ducking) {
+      filters.push(
+        `[0:a]lowpass=f=6000,` +
+        `aecho=0.6:0.3:60:0.15,` +
+        `aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo,` +
+        `asplit=2[voice][voicesc]`
+      );
+    } else {
+      filters.push(
+        `[0:a]lowpass=f=6000,` +
+        `aecho=0.6:0.3:60:0.15,` +
+        `aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo[voice]`
+      );
+    }
   } else {
     // Just format standardization
-    filters.push(
-      `[0:a]aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo[voice]`
-    );
+    if (ducking) {
+      filters.push(
+        `[0:a]aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo,` +
+        `asplit=2[voice][voicesc]`
+      );
+    } else {
+      filters.push(
+        `[0:a]aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo[voice]`
+      );
+    }
   }
 
   // Music processing: loop, trim, volume, fades
@@ -97,8 +114,9 @@ function buildFilterComplex(options) {
   // Mixing with optional ducking
   if (ducking) {
     // Sidechain compression: music ducks when voice is present
+    // Use [voicesc] as the sidechain source
     filters.push(
-      `[musicfaded][voice]sidechaincompress=` +
+      `[musicfaded][voicesc]sidechaincompress=` +
       `threshold=0.02:ratio=4:attack=50:release=400:` +
       `level_sc=${duckingAmount}[musicducked]`
     );
