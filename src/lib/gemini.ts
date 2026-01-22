@@ -290,6 +290,116 @@ Respond in this exact JSON format only:
   return callGemini(userPrompt);
 }
 
+/**
+ * Music prompt generation result for Suno AI
+ */
+export interface MusicPromptResult {
+  prompt: string;  // Detailed description for Suno (200-500 chars)
+  style: string;   // Style tags for Suno (max 200 chars)
+  title: string;   // Track title
+}
+
+/**
+ * Generate a detailed music prompt by analyzing the story content
+ * This prompt will be used by Suno AI to generate custom background music
+ */
+export async function generateMusicPrompt(
+  storyText: string,
+  theme: string,
+  childAge: number
+): Promise<MusicPromptResult> {
+  if (!GEMINI_API_KEY) {
+    throw new Error("GEMINI_API_KEY is not set");
+  }
+
+  const userPrompt = `Analyze this children's bedtime story and create a detailed music prompt for generating background music.
+
+STORY TO ANALYZE:
+${storyText.substring(0, 2000)}${storyText.length > 2000 ? '...' : ''}
+
+STORY THEME: ${theme}
+CHILD AGE: ${childAge}
+
+Your task: Create a music prompt that will generate the PERFECT background music for this bedtime story.
+
+ANALYZE THE STORY FOR:
+1. Emotional arc - How does the mood progress? (mysterious → adventurous → triumphant → peaceful)
+2. Key elements - What characters, creatures, or settings are featured? (dragons, ocean, forest, stars, etc.)
+3. Pacing - Is it fast-paced adventure or gentle journey?
+4. Ending mood - How should the music wind down for sleep?
+
+MUSIC REQUIREMENTS:
+- Must be INSTRUMENTAL (no vocals)
+- Must be a LULLABY suitable for bedtime
+- Should match the story's emotional journey
+- Should be gentle enough to help children sleep
+- For younger children (age 2-4): simpler, softer melodies
+- For older children (age 5-10): can be slightly more complex
+
+Respond in this exact JSON format:
+{
+  "prompt": "A detailed 200-500 character description of the music. Describe the instruments, mood progression, and how it should evolve throughout the piece. Example: 'Gentle orchestral lullaby that begins with soft mysterious piano notes, gradually introducing warm strings as the melody builds into a whimsical and magical theme, then slowly winds down to peaceful, dreamy tones perfect for drifting off to sleep.'",
+  "style": "instrumental lullaby children's bedtime [add 3-5 more relevant style tags based on story]",
+  "title": "A creative title for the track that relates to the story theme"
+}`;
+
+  const response = await fetch(`${BASE_URL}?key=${GEMINI_API_KEY}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      contents: [
+        {
+          parts: [
+            {
+              text: userPrompt,
+            },
+          ],
+        },
+      ],
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 1000,
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Gemini API failed: ${error}`);
+  }
+
+  const data = await response.json();
+  const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+  if (!content) {
+    throw new Error("No content in Gemini response");
+  }
+
+  // Parse JSON from response
+  let jsonStr = content.trim();
+  if (jsonStr.includes("```json")) {
+    jsonStr = jsonStr.split("```json")[1].split("```")[0].trim();
+  } else if (jsonStr.includes("```")) {
+    jsonStr = jsonStr.split("```")[1].split("```")[0].trim();
+  }
+
+  try {
+    const result = JSON.parse(jsonStr);
+    console.log(`[Gemini] Generated music prompt: "${result.title}"`);
+    return result;
+  } catch {
+    // Fallback if JSON parsing fails
+    console.warn("[Gemini] Failed to parse music prompt JSON, using fallback");
+    return {
+      prompt: "Gentle piano lullaby with soft strings, dreamy and magical atmosphere, perfect for a bedtime story. Starts softly, builds gently, then winds down peacefully.",
+      style: `instrumental lullaby children's bedtime ${theme} peaceful dreamy`,
+      title: `${theme.charAt(0).toUpperCase() + theme.slice(1)} Dreamtime Lullaby`,
+    };
+  }
+}
+
 async function callGemini(userPrompt: string): Promise<StoryGenerationResult> {
   if (!GEMINI_API_KEY) {
     throw new Error("GEMINI_API_KEY is not set");

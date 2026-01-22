@@ -19,6 +19,7 @@ import { uploadAudio } from "./blob";
 export interface MixOptions {
   narrationBuffer: Buffer;
   musicUrl: string;
+  musicBuffer?: Buffer; // Optional: pre-downloaded music buffer (from Suno)
   musicVolume?: number; // 0.0 - 1.0, default 0.25
   fadeInDuration?: number; // seconds, default 2
   fadeOutDuration?: number; // seconds, default 3
@@ -69,6 +70,7 @@ async function mixNarrationWithMusicRemote(
   const {
     narrationBuffer,
     musicUrl,
+    musicBuffer,
     musicVolume = 0.25,
     fadeInDuration = 2,
     fadeOutDuration = 3,
@@ -94,9 +96,19 @@ async function mixNarrationWithMusicRemote(
 
   console.log(`[AudioMixer] Uploaded narration to: ${narrationUrl}`);
 
-  // Convert relative music URL to absolute URL for VPS access
+  // Handle music URL - upload buffer if provided (Suno), otherwise use URL
   let absoluteMusicUrl = musicUrl;
-  if (musicUrl.startsWith("/")) {
+  if (musicBuffer) {
+    // Upload the Suno-generated music buffer to R2
+    absoluteMusicUrl = await uploadAudio(
+      musicBuffer,
+      `temp-music-${randomUUID()}`,
+      "preview",
+      { childName: "temp" }
+    );
+    console.log(`[AudioMixer] Uploaded Suno music to: ${absoluteMusicUrl}`);
+  } else if (musicUrl.startsWith("/")) {
+    // Convert relative music URL to absolute URL for VPS access
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://voicestories.vercel.app";
     absoluteMusicUrl = `${appUrl}${musicUrl}`;
   }
@@ -160,6 +172,7 @@ async function mixNarrationWithMusicLocal(
   const {
     narrationBuffer,
     musicUrl,
+    musicBuffer,
     musicVolume = 0.25,
     fadeInDuration = 2,
     fadeOutDuration = 3,
@@ -180,8 +193,12 @@ async function mixNarrationWithMusicLocal(
     // Write narration to temp file
     await writeFile(narrationPath, narrationBuffer);
 
-    // Download music to temp file
-    await downloadFile(musicUrl, musicPath);
+    // Use pre-downloaded buffer if available, otherwise download from URL
+    if (musicBuffer) {
+      await writeFile(musicPath, musicBuffer);
+    } else {
+      await downloadFile(musicUrl, musicPath);
+    }
 
     // Get narration duration
     const duration = await getAudioDuration(narrationPath);

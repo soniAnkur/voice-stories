@@ -306,3 +306,83 @@ export async function getBackgroundMusic(
   const track = selectMusicTrack(theme, backgroundMusicPrompt);
   return { url: track.url, source: "library" };
 }
+
+// ============================================
+// SUNO AI INTEGRATION (via Kie.ai API)
+// ============================================
+
+import { isSunoConfigured, generateMusicAndDownload } from "./suno";
+import { generateMusicPrompt } from "./gemini";
+
+export interface SunoMusicResult {
+  url: string;
+  source: "suno" | "library";
+  buffer?: Buffer;
+}
+
+/**
+ * Get background music using Suno AI
+ * Analyzes the story content with Gemini to generate a detailed music prompt,
+ * then uses Suno AI to generate custom music that matches the story.
+ * Falls back to curated library if Suno fails.
+ *
+ * @param storyText - The full story text to analyze
+ * @param theme - Story theme (adventure, animals, space, etc.)
+ * @param childAge - Child's age for age-appropriate music
+ * @param duration - Desired music duration in seconds
+ * @param timeoutMs - Max time to wait for Suno generation
+ */
+export async function getBackgroundMusicWithSuno(
+  storyText: string,
+  theme: string,
+  childAge: number,
+  duration: number = 300,
+  timeoutMs: number = 120000
+): Promise<SunoMusicResult> {
+  // Check if Suno is configured
+  if (!isSunoConfigured()) {
+    console.log("[Music] Suno not configured, using library fallback");
+    const track = selectMusicTrack(theme);
+    return { url: track.url, source: "library" };
+  }
+
+  try {
+    // Step 1: Generate detailed music prompt using Gemini
+    console.log("[Music] Generating music prompt from story content...");
+    const musicPrompt = await generateMusicPrompt(storyText, theme, childAge);
+
+    console.log(`[Music] Music prompt generated: "${musicPrompt.title}"`);
+    console.log(`[Music] Style: ${musicPrompt.style}`);
+
+    // Step 2: Generate music with Suno
+    console.log("[Music] Generating music with Suno AI...");
+    const result = await generateMusicAndDownload(
+      {
+        prompt: musicPrompt.prompt,
+        style: musicPrompt.style,
+        title: musicPrompt.title,
+        instrumental: true,
+      },
+      timeoutMs
+    );
+
+    if (result) {
+      console.log(`[Music] Suno music generated successfully (${result.buffer.length} bytes)`);
+      return {
+        url: result.url,
+        source: "suno",
+        buffer: result.buffer,
+      };
+    }
+
+    // Suno failed, fall back to library
+    console.warn("[Music] Suno generation failed, falling back to library");
+  } catch (error) {
+    console.error("[Music] Error generating Suno music:", error);
+  }
+
+  // Fallback to curated library
+  const track = selectMusicTrack(theme);
+  console.log(`[Music] Using library track: ${track.name}`);
+  return { url: track.url, source: "library" };
+}

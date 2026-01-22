@@ -18,11 +18,12 @@ export interface IStory extends Document {
   backgroundMusicPrompt?: string;
   // Music mixing fields
   musicTrackId?: string;
-  musicSource?: "library" | "mubert";
+  musicSource?: "library" | "mubert" | "suno";
   hasMusicMixed?: boolean;
   musicVolume?: number;
   status: StoryStatus;
   stripeSessionId?: string;
+  couponCode?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -80,7 +81,7 @@ const StorySchema = new Schema<IStory>(
     },
     musicSource: {
       type: String,
-      enum: ["library", "mubert"],
+      enum: ["library", "mubert", "suno"],
     },
     hasMusicMixed: {
       type: Boolean,
@@ -98,6 +99,9 @@ const StorySchema = new Schema<IStory>(
       default: "preview",
     },
     stripeSessionId: {
+      type: String,
+    },
+    couponCode: {
       type: String,
     },
   },

@@ -33,6 +33,7 @@ interface FormData {
   childAge: number;
   interests: string;
   theme: string;
+  musicSource: "suno" | "library";
 }
 
 export default function Home() {
@@ -58,6 +59,7 @@ export default function Home() {
     childAge: 5,
     interests: "",
     theme: "adventure",
+    musicSource: "suno",
   });
 
   const updateField = <K extends keyof FormData>(key: K, value: FormData[K]) => {
@@ -198,6 +200,7 @@ export default function Home() {
           childAge: formData.childAge,
           interests: formData.interests,
           theme: formData.theme,
+          musicSource: formData.musicSource,
         }),
       });
       const result = await res.json();
@@ -226,6 +229,7 @@ export default function Home() {
           interests: formData.interests,
           theme: formData.theme,
           email: formData.email,
+          musicSource: formData.musicSource,
         }),
       });
       const result = await res.json();
@@ -537,6 +541,39 @@ export default function Home() {
                             </button>
                           ))}
                         </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Background Music</label>
+                        <div className="flex gap-2 p-1 glass-card-subtle rounded-xl">
+                          <button
+                            type="button"
+                            onClick={() => updateField("musicSource", "suno")}
+                            className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                              formData.musicSource === "suno"
+                                ? "bg-white shadow-sm"
+                                : "text-secondary hover:text-foreground"
+                            }`}
+                          >
+                            AI Generated
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => updateField("musicSource", "library")}
+                            className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                              formData.musicSource === "library"
+                                ? "bg-white shadow-sm"
+                                : "text-secondary hover:text-foreground"
+                            }`}
+                          >
+                            Music Library
+                          </button>
+                        </div>
+                        <p className="text-xs text-tertiary mt-2">
+                          {formData.musicSource === "suno"
+                            ? "AI creates unique music matching your story (~2 min)"
+                            : "Uses pre-made lullabies from our library (faster)"}
+                        </p>
                       </div>
                     </div>
                   </div>

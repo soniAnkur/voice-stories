@@ -6,11 +6,12 @@ import { generateFullStory } from "@/lib/gemini";
 import { textToSpeech } from "@/lib/elevenlabs";
 import { uploadAudio } from "@/lib/blob";
 import { Features } from "@/lib/features";
-import { getBackgroundMusic } from "@/lib/music";
+import { getBackgroundMusicWithSuno, selectMusicTrack } from "@/lib/music";
 import { mixNarrationWithMusic, isFFmpegAvailable } from "@/lib/audioMixer";
 
-// Full story generation with 10-min audio can take several minutes
-export const maxDuration = 300;
+// Full story generation with 10-min audio + Suno music can take several minutes
+// Suno music generation adds 60-120s
+export const maxDuration = 420;
 
 export async function POST(request: Request) {
   try {
@@ -82,7 +83,7 @@ export async function POST(request: Request) {
 
       // Try to mix with background music (local FFmpeg or remote API)
       let finalAudioBuffer = narrationBuffer;
-      let musicSource: "library" | "mubert" | undefined;
+      let musicSource: "library" | "mubert" | "suno" | undefined;
       let hasMusicMixed = false;
 
       const ffmpegAvailable = await isFFmpegAvailable();
@@ -90,17 +91,33 @@ export async function POST(request: Request) {
 
       if (ffmpegAvailable || hasRemoteApi) {
         try {
-          // Get background music
-          const musicResult = await getBackgroundMusic(
-            story.theme || "adventure",
-            storyContent.backgroundMusicPrompt,
-            600 // 10 minutes
-          );
+          let musicResult: { url: string; source: "library" | "suno"; buffer?: Buffer };
+
+          // Check if story was created with library music preference
+          if (story.musicSource === "library") {
+            // Use curated library music (faster)
+            console.log(`   Using library music (user selected)...`);
+            const track = selectMusicTrack(story.theme || "adventure");
+            musicResult = { url: track.url, source: "library" };
+            console.log(`   Library track: ${track.name}`);
+          } else {
+            // Get background music using Suno AI (analyzes story content)
+            console.log(`   Generating background music with Suno AI...`);
+            musicResult = await getBackgroundMusicWithSuno(
+              storyContent.story,
+              story.theme || "adventure",
+              story.childAge,
+              600, // 10 minutes
+              150000 // 150s timeout for full story
+            );
+          }
 
           // Mix narration with background music
+          // If Suno returned a buffer, use it directly; otherwise use URL
           const mixResult = await mixNarrationWithMusic({
             narrationBuffer,
             musicUrl: musicResult.url,
+            musicBuffer: musicResult.buffer,
             musicVolume: 0.25,
             ducking: true,
             duckingAmount: 0.5,
@@ -112,7 +129,7 @@ export async function POST(request: Request) {
           musicSource = musicResult.source;
           hasMusicMixed = true;
 
-          console.log(`Mixed audio with ${musicSource} music`);
+          console.log(`   Mixed audio with ${musicSource} music`);
         } catch (mixError) {
           console.warn("Music mixing failed, using narration only:", mixError);
           // Continue with narration-only audio

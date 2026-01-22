@@ -11,6 +11,7 @@ interface StoryFormProps {
     interests: string;
     theme: string;
     customPrompt: string;
+    musicSource: "suno" | "library";
   }) => void;
 }
 
@@ -32,12 +33,13 @@ export function StoryForm({ onSubmit }: StoryFormProps) {
   const [interests, setInterests] = useState("");
   const [theme, setTheme] = useState("adventure");
   const [customPrompt, setCustomPrompt] = useState("");
+  const [musicSource, setMusicSource] = useState<"suno" | "library">("suno");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    onSubmit({ email, voiceId, childName, childAge, interests, theme, customPrompt });
+    onSubmit({ email, voiceId, childName, childAge, interests, theme, customPrompt, musicSource });
   };
 
   return (
@@ -184,6 +186,40 @@ export function StoryForm({ onSubmit }: StoryFormProps) {
         />
         <p className="text-xs text-tertiary mt-2">
           Add custom instructions for the story content
+        </p>
+      </div>
+
+      {/* Music Source Toggle */}
+      <div>
+        <label className="block text-sm font-medium mb-2">Background Music</label>
+        <div className="flex gap-2 p-1 glass-card-subtle rounded-xl">
+          <button
+            type="button"
+            onClick={() => setMusicSource("suno")}
+            className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+              musicSource === "suno"
+                ? "bg-white shadow-sm"
+                : "text-secondary hover:text-foreground"
+            }`}
+          >
+            AI Generated
+          </button>
+          <button
+            type="button"
+            onClick={() => setMusicSource("library")}
+            className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+              musicSource === "library"
+                ? "bg-white shadow-sm"
+                : "text-secondary hover:text-foreground"
+            }`}
+          >
+            Music Library
+          </button>
+        </div>
+        <p className="text-xs text-tertiary mt-2">
+          {musicSource === "suno"
+            ? "AI creates unique music matching your story (takes ~2 min)"
+            : "Uses pre-made lullabies from our library (faster)"}
         </p>
       </div>
 
