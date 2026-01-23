@@ -8,7 +8,7 @@ export const Features = {
    * When true, bypasses Stripe payment and gives free access to full stories
    * Set to false in production to enable payments
    */
-  BYPASS_PAYMENT: true,
+  BYPASS_PAYMENT: false,
 
   /**
    * When true, skips actual ElevenLabs API calls (for testing UI)
