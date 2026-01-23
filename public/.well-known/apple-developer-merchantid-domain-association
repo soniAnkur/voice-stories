@@ -1,0 +1,7 @@
+REPLACE_WITH_STRIPE_VERIFICATION_STRING
+
+Instructions:
+1. Go to Stripe Dashboard > Settings > Payment methods > Apple Pay
+2. Click "Add new domain" and enter your production domain
+3. Copy the verification string Stripe provides
+4. Replace this entire file content with that string (no extra lines)

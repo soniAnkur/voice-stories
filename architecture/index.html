@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voice Stories - Architecture</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      color: #e4e4e7;
+      padding: 2rem;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(90deg, #a78bfa, #818cf8, #6366f1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #a1a1aa;
+      margin-bottom: 2rem;
+    }
+
+    .tabs {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      padding: 0.75rem 1.5rem;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 0.9rem;
+    }
+
+    .tab:hover {
+      background: rgba(255, 255, 255, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .tab.active {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border-color: transparent;
+    }
+
+    .content {
+      display: none;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Architecture Diagram */
+    .architecture {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .component {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 1.5rem;
+      transition: all 0.3s ease;
+    }
+
+    .component:hover {
+      transform: translateY(-5px);
+      border-color: rgba(99, 102, 241, 0.5);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .component-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .component h3 {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+      color: #f4f4f5;
+    }
+
+    .component p {
+      font-size: 0.85rem;
+      color: #a1a1aa;
+      line-height: 1.6;
+    }
+
+    .component .tech {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .component .tech span {
+      background: rgba(99, 102, 241, 0.2);
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      color: #a78bfa;
+    }
+
+    /* Flow Diagram */
+    .flow-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .flow-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 1.5rem;
+      margin-bottom: 1rem;
+      position: relative;
+    }
+
+    .flow-number {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+
+    .flow-line {
+      position: absolute;
+      left: 19px;
+      top: 40px;
+      width: 2px;
+      height: calc(100% + 1rem);
+      background: linear-gradient(to bottom, #6366f1, transparent);
+    }
+
+    .flow-content {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 1.25rem;
+    }
+
+    .flow-content h4 {
+      color: #f4f4f5;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .flow-content p {
+      color: #a1a1aa;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    .flow-content .arrow {
+      color: #6366f1;
+      font-family: monospace;
+      margin: 0.5rem 0;
+      font-size: 0.85rem;
+    }
+
+    /* Audio Pipeline */
+    .pipeline {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .pipeline-stage {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .pipeline-stage h4 {
+      color: #a78bfa;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .filter-chain {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .filter {
+      background: rgba(99, 102, 241, 0.2);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 0.8rem;
+      color: #c4b5fd;
+    }
+
+    .filter-arrow {
+      color: #6366f1;
+      font-size: 1.2rem;
+    }
+
+    .param-list {
+      margin-top: 1rem;
+      padding-left: 1rem;
+      border-left: 2px solid rgba(99, 102, 241, 0.3);
+    }
+
+    .param-list li {
+      color: #a1a1aa;
+      font-size: 0.85rem;
+      margin-bottom: 0.25rem;
+      list-style: none;
+    }
+
+    .param-list code {
+      color: #a78bfa;
+      background: rgba(99, 102, 241, 0.1);
+      padding: 0.1rem 0.3rem;
+      border-radius: 4px;
+    }
+
+    /* Environment Variables */
+    .env-section {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .env-group {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .env-group h4 {
+      color: #f4f4f5;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .env-var {
+      display: flex;
+      gap: 1rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      flex-wrap: wrap;
+    }
+
+    .env-var:last-child {
+      border-bottom: none;
+    }
+
+    .env-key {
+      font-family: monospace;
+      color: #a78bfa;
+      min-width: 280px;
+    }
+
+    .env-desc {
+      color: #a1a1aa;
+      font-size: 0.9rem;
+    }
+
+    /* Visual Flow */
+    .visual-flow {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .flow-diagram {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .flow-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .flow-box {
+      background: rgba(255, 255, 255, 0.08);
+      border: 2px solid;
+      border-radius: 12px;
+      padding: 1rem 1.5rem;
+      text-align: center;
+      min-width: 140px;
+      transition: all 0.3s ease;
+    }
+
+    .flow-box:hover {
+      transform: scale(1.05);
+    }
+
+    .flow-box.client { border-color: #22c55e; }
+    .flow-box.vercel { border-color: #3b82f6; }
+    .flow-box.ai { border-color: #f59e0b; }
+    .flow-box.vps { border-color: #ef4444; }
+    .flow-box.storage { border-color: #8b5cf6; }
+
+    .flow-box .icon {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .flow-box .label {
+      font-size: 0.85rem;
+      color: #e4e4e7;
+    }
+
+    .flow-connector {
+      font-size: 1.5rem;
+      color: #6366f1;
+    }
+
+    .flow-connector.vertical {
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+    }
+
+    /* Legend */
+    .legend {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-top: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      color: #a1a1aa;
+    }
+
+    .legend-color {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+    }
+
+    .legend-color.client { background: #22c55e; }
+    .legend-color.vercel { background: #3b82f6; }
+    .legend-color.ai { background: #f59e0b; }
+    .legend-color.vps { background: #ef4444; }
+    .legend-color.storage { background: #8b5cf6; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      h1 { font-size: 1.8rem; }
+      .tabs { gap: 0.5rem; }
+      .tab { padding: 0.5rem 1rem; font-size: 0.8rem; }
+      .flow-step { flex-direction: column; }
+      .flow-line { display: none; }
+      .env-key { min-width: auto; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Voice Stories Architecture</h1>
+  <p class="subtitle">Personalized AI-powered bedtime stories with professional audio mixing</p>
+
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('overview')">Overview</div>
+    <div class="tab" onclick="showTab('flow')">Story Flow</div>
+    <div class="tab" onclick="showTab('audio')">Audio Pipeline</div>
+    <div class="tab" onclick="showTab('env')">Environment</div>
+  </div>
+
+  <!-- Overview Tab -->
+  <div id="overview" class="content active">
+    <div class="visual-flow">
+      <div class="flow-diagram">
+        <div class="flow-row">
+          <div class="flow-box client">
+            <div class="icon">🌐</div>
+            <div class="label">Browser</div>
+          </div>
+        </div>
+
+        <div class="flow-row">
+          <span class="flow-connector">⬇️</span>
+        </div>
+
+        <div class="flow-row">
+          <div class="flow-box vercel">
+            <div class="icon">▲</div>
+            <div class="label">Vercel<br><small>Next.js API</small></div>
+          </div>
+        </div>
+
+        <div class="flow-row">
+          <span class="flow-connector">⬇️</span>
+          <span class="flow-connector">⬇️</span>
+          <span class="flow-connector">⬇️</span>
+          <span class="flow-connector">⬇️</span>
+        </div>
+
+        <div class="flow-row">
+          <div class="flow-box ai">
+            <div class="icon">✨</div>
+            <div class="label">Gemini<br><small>Story Gen</small></div>
+          </div>
+          <div class="flow-box ai">
+            <div class="icon">🎙️</div>
+            <div class="label">ElevenLabs<br><small>Voice TTS</small></div>
+          </div>
+          <div class="flow-box vps">
+            <div class="icon">🎛️</div>
+            <div class="label">FFmpeg VPS<br><small>Audio Mix</small></div>
+          </div>
+          <div class="flow-box storage">
+            <div class="icon">🗄️</div>
+            <div class="label">MongoDB<br><small>Data</small></div>
+          </div>
+        </div>
+
+        <div class="flow-row">
+          <span class="flow-connector" style="margin-left: 280px;">⬇️</span>
+        </div>
+
+        <div class="flow-row">
+          <div class="flow-box storage" style="margin-left: 200px;">
+            <div class="icon">☁️</div>
+            <div class="label">Cloudflare R2<br><small>Audio Storage</small></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item"><div class="legend-color client"></div> Client</div>
+        <div class="legend-item"><div class="legend-color vercel"></div> Vercel</div>
+        <div class="legend-item"><div class="legend-color ai"></div> AI Services</div>
+        <div class="legend-item"><div class="legend-color vps"></div> VPS</div>
+        <div class="legend-item"><div class="legend-color storage"></div> Storage</div>
+      </div>
+    </div>
+
+    <div class="architecture" style="margin-top: 3rem;">
+      <div class="component">
+        <div class="component-icon" style="background: linear-gradient(135deg, #22c55e, #16a34a);">🌐</div>
+        <h3>Client (Browser)</h3>
+        <p>React/Next.js frontend for voice setup, story configuration, and audio playback. Responsive design for mobile and desktop.</p>
+        <div class="tech">
+          <span>React</span>
+          <span>Next.js</span>
+          <span>Tailwind</span>
+        </div>
+      </div>
+
+      <div class="component">
+        <div class="component-icon" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">▲</div>
+        <h3>Vercel (Next.js)</h3>
+        <p>Serverless API routes handling authentication, story generation orchestration, and file uploads. Edge network for fast global delivery.</p>
+        <div class="tech">
+          <span>API Routes</span>
+          <span>Edge Functions</span>
+          <span>60-300s timeout</span>
+        </div>
+      </div>
+
+      <div class="component">
+        <div class="component-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">✨</div>
+        <h3>Google Gemini</h3>
+        <p>AI-powered story generation. Creates personalized bedtime stories based on child's name, age, interests, and theme preferences.</p>
+        <div class="tech">
+          <span>gemini-1.5-flash</span>
+          <span>gemini-1.5-pro</span>
+        </div>
+      </div>
+
+      <div class="component">
+        <div class="component-icon" style="background: linear-gradient(135deg, #ec4899, #db2777);">🎙️</div>
+        <h3>ElevenLabs</h3>
+        <p>Voice cloning and text-to-speech. Clones parent's voice from 1-minute sample and generates natural-sounding narration.</p>
+        <div class="tech">
+          <span>Voice Cloning</span>
+          <span>TTS API</span>
+          <span>0.7x Speed</span>
+        </div>
+      </div>
+
+      <div class="component">
+        <div class="component-icon" style="background: linear-gradient(135deg, #ef4444, #dc2626);">🎛️</div>
+        <h3>FFmpeg VPS</h3>
+        <p>Hostinger VPS running FFmpeg for professional audio mixing. Sidechain compression, dreamy effects, and loudness normalization.</p>
+        <div class="tech">
+          <span>nginx + SSL</span>
+          <span>Node.js</span>
+          <span>PM2</span>
+          <span>FFmpeg</span>
+        </div>
+      </div>
+
+      <div class="component">
+        <div class="component-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">☁️</div>
+        <h3>Cloudflare R2</h3>
+        <p>Object storage for audio files. S3-compatible API with global CDN. Stores preview and full story audio files.</p>
+        <div class="tech">
+          <span>S3 API</span>
+          <span>Public URLs</span>
+          <span>1yr Cache</span>
+        </div>
+      </div>
+
+      <div class="component">
+        <div class="component-icon" style="background: linear-gradient(135deg, #10b981, #059669);">🗄️</div>
+        <h3>MongoDB Atlas</h3>
+        <p>Cloud database storing user profiles, voice IDs, and story metadata. Handles user authentication and story history.</p>
+        <div class="tech">
+          <span>Users</span>
+          <span>Stories</span>
+          <span>Voice IDs</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Flow Tab -->
+  <div id="flow" class="content">
+    <div class="flow-container">
+      <h2 style="text-align: center; margin-bottom: 2rem; color: #a78bfa;">Story Generation Flow</h2>
+
+      <div class="flow-step">
+        <div class="flow-number">1</div>
+        <div class="flow-line"></div>
+        <div class="flow-content">
+          <h4>🌐 User Submits Story Request</h4>
+          <p>User enters child's name, age, interests, and selects a theme (adventure, fantasy, space, etc.)</p>
+          <div class="arrow">Client → POST /api/story/preview</div>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-number">2</div>
+        <div class="flow-line"></div>
+        <div class="flow-content">
+          <h4>✨ Gemini Generates Story</h4>
+          <p>AI creates a personalized bedtime story (~500 words for preview, ~1500 words for full) with a background music prompt suggestion.</p>
+          <div class="arrow">Vercel → Gemini API → Story Text + Music Prompt</div>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-number">3</div>
+        <div class="flow-line"></div>
+        <div class="flow-content">
+          <h4>🎙️ ElevenLabs Generates Narration</h4>
+          <p>Story text is converted to speech using the cloned parent voice. Speed set to 0.7x for calm bedtime delivery.</p>
+          <div class="arrow">Vercel → ElevenLabs TTS → MP3 Buffer</div>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-number">4</div>
+        <div class="flow-line"></div>
+        <div class="flow-content">
+          <h4>☁️ Upload Narration to R2</h4>
+          <p>Raw narration audio is temporarily uploaded to R2 so the VPS can access it for mixing.</p>
+          <div class="arrow">Vercel → R2 Upload → Public URL</div>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-number">5</div>
+        <div class="flow-line"></div>
+        <div class="flow-content">
+          <h4>🎛️ FFmpeg VPS Mixes Audio</h4>
+          <p>VPS downloads narration and background music, applies sidechain ducking, dreamy effects, and loudness normalization.</p>
+          <div class="arrow">Vercel → POST https://srv877962.hstgr.cloud/api/mix</div>
+          <p style="margin-top: 0.5rem;"><strong>Processing:</strong> Download files → FFmpeg filter → Upload to R2</p>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-number">6</div>
+        <div class="flow-line"></div>
+        <div class="flow-content">
+          <h4>📥 Download Mixed Audio</h4>
+          <p>Vercel downloads the final mixed audio from R2 and stores the URL in MongoDB.</p>
+          <div class="arrow">VPS → R2 → Vercel → MongoDB</div>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="flow-number">7</div>
+        <div class="flow-content">
+          <h4>🎧 Return Audio URL to Client</h4>
+          <p>Client receives the final mixed audio URL and can play the story with professional background music.</p>
+          <div class="arrow">Vercel → Client: { previewUrl, storyId }</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audio Tab -->
+  <div id="audio" class="content">
+    <div class="pipeline">
+      <h2 style="text-align: center; margin-bottom: 2rem; color: #a78bfa;">FFmpeg Audio Processing Pipeline</h2>
+
+      <div class="pipeline-stage">
+        <h4>🎤 Voice Processing Chain</h4>
+        <p style="color: #a1a1aa; margin-bottom: 1rem;">Input: narration.mp3 [0:a]</p>
+        <div class="filter-chain">
+          <span class="filter">lowpass=f=6000</span>
+          <span class="filter-arrow">→</span>
+          <span class="filter">aecho=0.6:0.3:60:0.15</span>
+          <span class="filter-arrow">→</span>
+          <span class="filter">aformat</span>
+          <span class="filter-arrow">→</span>
+          <span class="filter">asplit=2</span>
+        </div>
+        <ul class="param-list">
+          <li><code>lowpass=f=6000</code> - Warm the voice by cutting harsh high frequencies</li>
+          <li><code>aecho=0.6:0.3:60:0.15</code> - Subtle echo for dreamy feel</li>
+          <li><code>asplit=2</code> - Split into [voice] for mix and [voicesc] for sidechain</li>
+        </ul>
+      </div>
+
+      <div class="pipeline-stage">
+        <h4>🎵 Music Processing Chain</h4>
+        <p style="color: #a1a1aa; margin-bottom: 1rem;">Input: music.mp3 [1:a]</p>
+        <div class="filter-chain">
+          <span class="filter">aloop=-1</span>
+          <span class="filter-arrow">→</span>
+          <span class="filter">atrim=0:duration</span>
+          <span class="filter-arrow">→</span>
+          <span class="filter">volume=0.25</span>
+          <span class="filter-arrow">→</span>
+          <span class="filter">afade in/out</span>
+        </div>
+        <ul class="param-list">
+          <li><code>aloop=-1</code> - Loop music infinitely</li>
+          <li><code>atrim</code> - Trim to match narration duration</li>
+          <li><code>volume=0.25</code> - Set base volume to 25%</li>
+          <li><code>afade</code> - 2s fade in, 3s fade out</li>
+        </ul>
+      </div>
+
+      <div class="pipeline-stage">
+        <h4>🔊 Sidechain Ducking</h4>
+        <p style="color: #a1a1aa; margin-bottom: 1rem;">Music ducks when voice is present</p>
+        <div class="filter-chain">
+          <span class="filter">[musicfaded]</span>
+          <span class="filter-arrow">+</span>
+          <span class="filter">[voicesc]</span>
+          <span class="filter-arrow">→</span>
+          <span class="filter">sidechaincompress</span>
+          <span class="filter-arrow">→</span>
+          <span class="filter">[musicducked]</span>
+        </div>
+        <ul class="param-list">
+          <li><code>threshold=0.02</code> - Trigger on quiet speech</li>
+          <li><code>ratio=4:1</code> - Moderate compression</li>
+          <li><code>attack=50ms</code> - Quick duck response</li>
+          <li><code>release=400ms</code> - Smooth music return</li>
+          <li><code>level_sc=0.5</code> - Ducking intensity</li>
+        </ul>
+      </div>
+
+      <div class="pipeline-stage">
+        <h4>🎚️ Final Mix & Normalization</h4>
+        <p style="color: #a1a1aa; margin-bottom: 1rem;">Combine and normalize to broadcast standards</p>
+        <div class="filter-chain">
+          <span class="filter">[voice]</span>
+          <span class="filter-arrow">+</span>
+          <span class="filter">[musicducked]</span>
+          <span class="filter-arrow">→</span>
+          <span class="filter">amix</span>
+          <span class="filter-arrow">→</span>
+          <span class="filter">loudnorm</span>
+          <span class="filter-arrow">→</span>
+          <span class="filter">[final]</span>
+        </div>
+        <ul class="param-list">
+          <li><code>amix=inputs=2</code> - Mix voice and ducked music</li>
+          <li><code>duration=first</code> - Match narration length</li>
+          <li><code>loudnorm I=-16</code> - EBU R128 broadcast standard</li>
+          <li><code>TP=-1.5</code> - True peak limit</li>
+          <li><code>LRA=11</code> - Loudness range</li>
+        </ul>
+      </div>
+
+      <div class="pipeline-stage" style="background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.3);">
+        <h4>📤 Output</h4>
+        <div class="filter-chain">
+          <span class="filter">libmp3lame</span>
+          <span class="filter-arrow">@</span>
+          <span class="filter">192kbps</span>
+          <span class="filter-arrow">→</span>
+          <span class="filter">mixed.mp3</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Environment Tab -->
+  <div id="env" class="content">
+    <div class="env-section">
+      <h2 style="text-align: center; margin-bottom: 2rem; color: #a78bfa;">Environment Configuration</h2>
+
+      <div class="env-group">
+        <h4>▲ Vercel Environment Variables</h4>
+
+        <div class="env-var">
+          <span class="env-key">MONGODB_URI</span>
+          <span class="env-desc">MongoDB Atlas connection string</span>
+        </div>
+
+        <div class="env-var">
+          <span class="env-key">ELEVENLABS_API_KEY</span>
+          <span class="env-desc">ElevenLabs API key for voice cloning & TTS</span>
+        </div>
+
+        <div class="env-var">
+          <span class="env-key">GOOGLE_GENERATIVE_AI_API_KEY</span>
+          <span class="env-desc">Google Gemini API key for story generation</span>
+        </div>
+
+        <div class="env-var">
+          <span class="env-key">FFMPEG_API_URL</span>
+          <span class="env-desc">https://srv877962.hstgr.cloud</span>
+        </div>
+
+        <div class="env-var">
+          <span class="env-key">FFMPEG_API_KEY</span>
+          <span class="env-desc">Bearer token for FFmpeg VPS authentication</span>
+        </div>
+
+        <div class="env-var">
+          <span class="env-key">CLOUDFLARE_R2_*</span>
+          <span class="env-desc">R2 credentials (ACCESS_KEY_ID, SECRET, ACCOUNT_ID, BUCKET, PUBLIC_URL)</span>
+        </div>
+
+        <div class="env-var">
+          <span class="env-key">NEXT_PUBLIC_APP_URL</span>
+          <span class="env-desc">App URL for absolute music paths (https://voice-stories.vercel.app)</span>
+        </div>
+      </div>
+
+      <div class="env-group">
+        <h4>🖥️ VPS Environment Variables (/opt/ffmpeg-api/.env)</h4>
+
+        <div class="env-var">
+          <span class="env-key">PORT</span>
+          <span class="env-desc">8081 (nginx proxies 443 → 8081)</span>
+        </div>
+
+        <div class="env-var">
+          <span class="env-key">API_KEY</span>
+          <span class="env-desc">Same as FFMPEG_API_KEY on Vercel</span>
+        </div>
+
+        <div class="env-var">
+          <span class="env-key">CLOUDFLARE_R2_*</span>
+          <span class="env-desc">R2 credentials for uploading mixed audio</span>
+        </div>
+
+        <div class="env-var">
+          <span class="env-key">ALLOWED_ORIGINS</span>
+          <span class="env-desc">CORS whitelist (voice-stories.vercel.app, localhost:3000)</span>
+        </div>
+      </div>
+
+      <div class="env-group">
+        <h4>🔧 VPS Infrastructure</h4>
+
+        <div class="env-var">
+          <span class="env-key">Host</span>
+          <span class="env-desc">srv877962.hstgr.cloud (Hostinger VPS)</span>
+        </div>
+
+        <div class="env-var">
+          <span class="env-key">SSL</span>
+          <span class="env-desc">Let's Encrypt via Certbot (auto-renewal)</span>
+        </div>
+
+        <div class="env-var">
+          <span class="env-key">Reverse Proxy</span>
+          <span class="env-desc">nginx on port 443 → Node.js on port 8081</span>
+        </div>
+
+        <div class="env-var">
+          <span class="env-key">Process Manager</span>
+          <span class="env-desc">PM2 (pm2 start index.js --name ffmpeg-api)</span>
+        </div>
+
+        <div class="env-var">
+          <span class="env-key">Firewall</span>
+          <span class="env-desc">UFW: ports 22 (SSH), 80, 443 only</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function showTab(tabId) {
+      // Hide all content
+      document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+
+      // Show selected
+      document.getElementById(tabId).classList.add('active');
+      event.target.classList.add('active');
+    }
+  </script>
+</body>
+</html>

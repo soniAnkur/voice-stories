@@ -41,7 +41,8 @@ export async function createCheckoutSession({
 
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
-    payment_method_types: ["card"],
+    // Let Stripe auto-detect available payment methods (Apple Pay, Google Pay, Link, cards)
+    // based on dashboard settings and user's device
     customer_email: customerEmail,
     line_items: [
       {

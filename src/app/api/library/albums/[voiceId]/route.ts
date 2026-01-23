@@ -36,10 +36,10 @@ export async function GET(
 
     const userIds = usersWithVoice.map((u) => u._id);
 
-    // Find stories linked to these users (that don't have their own voiceId)
+    // Find stories linked to these users (that don't have their own voiceId or have null voiceId)
     const userLinkedStories = await Story.find({
       userId: { $in: userIds },
-      voiceId: { $exists: false },
+      $or: [{ voiceId: { $exists: false } }, { voiceId: null }],
       status: "complete",
       fullAudioUrl: { $exists: true, $ne: null },
     })
