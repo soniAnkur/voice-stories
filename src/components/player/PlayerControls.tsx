@@ -43,8 +43,8 @@ export function PlayerControls({
           disabled={!canGoPrevious}
           className={`${skipButtonSize} flex items-center justify-center rounded-full transition-all ${
             canGoPrevious
-              ? "text-gray-700 hover:bg-white/20"
-              : "text-gray-400 opacity-50"
+              ? "text-white hover:bg-white/10"
+              : "text-gray-500 opacity-50"
           }`}
           aria-label="Previous"
         >
@@ -61,7 +61,7 @@ export function PlayerControls({
       {/* Play/Pause Button */}
       <button
         onClick={handleTogglePlay}
-        className={`${buttonSize} bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-full flex items-center justify-center transition-all flex-shrink-0 shadow-lg hover:shadow-xl hover:scale-105`}
+        className={`${buttonSize} bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 rounded-full flex items-center justify-center transition-all flex-shrink-0 shadow-lg hover:shadow-xl hover:scale-105`}
         aria-label={state.isPlaying ? "Pause" : "Play"}
       >
         {state.isPlaying ? (
@@ -86,8 +86,8 @@ export function PlayerControls({
           disabled={!canGoNext}
           className={`${skipButtonSize} flex items-center justify-center rounded-full transition-all ${
             canGoNext
-              ? "text-gray-700 hover:bg-white/20"
-              : "text-gray-400 opacity-50"
+              ? "text-white hover:bg-white/10"
+              : "text-gray-500 opacity-50"
           }`}
           aria-label="Next"
         >

@@ -56,11 +56,11 @@ export function FullPlayer() {
         <div className="flex items-center justify-between py-4">
           <button
             onClick={handleCollapse}
-            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors"
+            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
             aria-label="Collapse"
           >
             <svg
-              className="w-6 h-6 text-gray-700"
+              className="w-6 h-6 text-white"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -78,11 +78,11 @@ export function FullPlayer() {
 
           <button
             onClick={handleClose}
-            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors"
+            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
             aria-label="Close"
           >
             <svg
-              className="w-6 h-6 text-gray-700"
+              className="w-6 h-6 text-white"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -99,7 +99,7 @@ export function FullPlayer() {
 
         {/* Swipe indicator */}
         <div className="flex justify-center mb-4">
-          <div className="w-10 h-1 bg-gray-300 rounded-full" />
+          <div className="w-10 h-1 bg-gray-600 rounded-full" />
         </div>
 
         {/* Album Art */}

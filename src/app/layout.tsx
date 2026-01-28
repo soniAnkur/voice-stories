@@ -3,6 +3,7 @@ import "./globals.css";
 import { PlayerProvider } from "@/components/player/PlayerProvider";
 import { MiniPlayer } from "@/components/player/MiniPlayer";
 import { FullPlayer } from "@/components/player/FullPlayer";
+import { BottomTabBar } from "@/components/navigation/BottomTabBar";
 
 export const metadata: Metadata = {
   title: "Voice Bedtime Tales - Stories in YOUR Voice",
@@ -42,6 +43,9 @@ export default function RootLayout({
           {/* Global Players */}
           <MiniPlayer />
           <FullPlayer />
+
+          {/* Bottom Tab Bar Navigation */}
+          <BottomTabBar />
         </PlayerProvider>
       </body>
     </html>
