@@ -86,7 +86,7 @@ export function MiniPlayer() {
         </div>
 
         {/* Expand indicator */}
-        <div className="w-1 h-6 bg-gray-300 rounded-full ml-2" />
+        <div className="w-1 h-6 bg-gray-600 rounded-full ml-2" />
       </div>
     </div>
   );
