@@ -73,15 +73,17 @@ function buildFilterComplex(options) {
     // Split output: one for sidechain, one for final mix
     if (ducking) {
       filters.push(
-        `[0:a]lowpass=f=6000,` +
-        `aecho=0.6:0.3:60:0.15,` +
+        `[0:a]lowpass=f=8000,` +
+        `aecho=0.8:0.5:100|200|300:0.5|0.35|0.2,` +
+        `aecho=0.8:0.4:500|700:0.3|0.2,` +
         `aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo,` +
         `asplit=2[voice][voicesc]`
       );
     } else {
       filters.push(
-        `[0:a]lowpass=f=6000,` +
-        `aecho=0.6:0.3:60:0.15,` +
+        `[0:a]lowpass=f=8000,` +
+        `aecho=0.8:0.5:100|200|300:0.5|0.35|0.2,` +
+        `aecho=0.8:0.4:500|700:0.3|0.2,` +
         `aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo[voice]`
       );
     }
@@ -115,10 +117,11 @@ function buildFilterComplex(options) {
   if (ducking) {
     // Sidechain compression: music ducks when voice is present
     // Use [voicesc] as the sidechain source
+    // Tuned for more aggressive ducking to match local behavior
     filters.push(
       `[musicfaded][voicesc]sidechaincompress=` +
-      `threshold=0.02:ratio=4:attack=50:release=400:` +
-      `level_sc=${duckingAmount}[musicducked]`
+      `threshold=0.015:ratio=6:attack=50:release=400:` +
+      `level_sc=${0.8 * (1 - duckingAmount)}[musicducked]`
     );
 
     // Final mix with loudness normalization
