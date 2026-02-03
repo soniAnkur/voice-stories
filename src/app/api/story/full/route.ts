@@ -7,7 +7,7 @@ import { textToSpeech } from "@/lib/elevenlabs";
 import { uploadAudio } from "@/lib/blob";
 import { Features } from "@/lib/features";
 import { getBackgroundMusic } from "@/lib/music";
-import { mixNarrationWithMusic, isFFmpegAvailable } from "@/lib/audioMixer";
+import { mixAudioSimple } from "@/lib/simpleAudioMixer";
 
 // Full story generation with 10-min audio can take several minutes
 export const maxDuration = 300;
@@ -80,45 +80,36 @@ export async function POST(request: Request) {
         elevenlabsVoiceId
       );
 
-      // Try to mix with background music (local FFmpeg or remote API)
+      // Mix narration with background music (pure JS - no FFmpeg needed)
       let finalAudioBuffer = narrationBuffer;
       let musicSource: "library" | "mubert" | undefined;
       let hasMusicMixed = false;
 
-      const ffmpegAvailable = await isFFmpegAvailable();
-      const hasRemoteApi = !!process.env.FFMPEG_API_URL;
+      try {
+        // Get background music
+        const musicResult = await getBackgroundMusic(
+          story.theme || "adventure",
+          storyContent.backgroundMusicPrompt,
+          600 // 10 minutes
+        );
 
-      if (ffmpegAvailable || hasRemoteApi) {
-        try {
-          // Get background music
-          const musicResult = await getBackgroundMusic(
-            story.theme || "adventure",
-            storyContent.backgroundMusicPrompt,
-            600 // 10 minutes
-          );
+        // Mix narration with background music using simple JS mixer
+        const mixResult = await mixAudioSimple({
+          narrationBuffer: Buffer.from(narrationBuffer),
+          musicUrl: musicResult.url,
+          musicVolume: 0.20, // Background music volume (no ducking)
+          fadeInDuration: 2,
+          fadeOutDuration: 3,
+        });
 
-          // Mix narration with background music
-          const mixResult = await mixNarrationWithMusic({
-            narrationBuffer,
-            musicUrl: musicResult.url,
-            musicVolume: 0.25,
-            ducking: true,
-            duckingAmount: 0.5,
-            fadeInDuration: 2,
-            fadeOutDuration: 3,
-          });
+        finalAudioBuffer = mixResult.buffer;
+        musicSource = musicResult.source;
+        hasMusicMixed = true;
 
-          finalAudioBuffer = mixResult.buffer;
-          musicSource = musicResult.source;
-          hasMusicMixed = true;
-
-          console.log(`Mixed audio with ${musicSource} music`);
-        } catch (mixError) {
-          console.warn("Music mixing failed, using narration only:", mixError);
-          // Continue with narration-only audio
-        }
-      } else {
-        console.warn("FFmpeg not available (no local or remote), skipping music mixing");
+        console.log(`Mixed audio with ${musicSource} music (simple mixer)`);
+      } catch (mixError) {
+        console.warn("Music mixing failed, using narration only:", mixError);
+        // Continue with narration-only audio
       }
 
       // Upload final audio to Vercel Blob with meaningful filename

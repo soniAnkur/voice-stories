@@ -20,7 +20,7 @@ Complete documentation for the Voice Bedtime Tales application.
    - Story composition (Google Gemini)
    - Music generation and selection
    - Voice narration (ElevenLabs)
-   - Audio mixing (FFmpeg)
+   - Audio mixing (pure JavaScript)
 
 4. [API Reference](./04-API-REFERENCE.md)
    - All API endpoints
@@ -35,7 +35,6 @@ Complete documentation for the Voice Bedtime Tales application.
 6. [Deployment Guide](./06-DEPLOYMENT-GUIDE.md)
    - Vercel deployment
    - MongoDB Atlas setup
-   - FFmpeg API server setup
    - Environment configuration
 
 ---
@@ -43,7 +42,6 @@ Complete documentation for the Voice Bedtime Tales application.
 ## Quick Links
 
 - **Project Repository**: `/Users/ankursoni/2026/voice_stories`
-- **FFmpeg API**: `/Users/ankursoni/2026/voice_stories/ffmpeg-api`
 - **Live Application**: `NEXT_PUBLIC_APP_URL` (configured in `.env.local`)
 
 ---
@@ -55,7 +53,7 @@ Voice Bedtime Tales creates personalized bedtime stories narrated in a parent's 
 - **AI Story Generation** (Google Gemini 2.0 Flash)
 - **Voice Cloning** (ElevenLabs API v3)
 - **Background Music** (Mubert AI or Curated Library)
-- **Professional Audio Mixing** (FFmpeg with sidechain compression)
+- **Audio Mixing** (Pure JavaScript - no FFmpeg required!)
 - **Cloud Storage** (Cloudflare R2)
 - **Payments** (Stripe)
 
@@ -77,11 +75,14 @@ Voice Bedtime Tales creates personalized bedtime stories narrated in a parent's 
 - **Story Generation**: Google Gemini 2.0 Flash
 - **Voice Cloning & TTS**: ElevenLabs API v3
 - **Music Generation**: Mubert API (optional)
-- **Audio Processing**: FFmpeg (local or remote API)
+
+### Audio Processing
+- **MP3 Decoding**: mpg123-decoder (WASM-based)
+- **MP3 Encoding**: @breezystack/lamejs (pure JavaScript)
+- **No FFmpeg required** - runs on Vercel serverless!
 
 ### Infrastructure
-- **Hosting**: Vercel
-- **FFmpeg Server**: VPS with Express.js
+- **Hosting**: Vercel (serverless)
 - **Database**: MongoDB Atlas
 
 ---
@@ -92,7 +93,7 @@ Voice Bedtime Tales creates personalized bedtime stories narrated in a parent's 
 2. **Personalized Stories**: Child's name, age, and interests integrated
 3. **Age-Appropriate Content**: 2-10 years old
 4. **Background Music**: AI-generated or curated library
-5. **Professional Audio**: Sidechain compression, dreamy effects
+5. **Audio Mixing**: Narration + music with fade effects
 6. **Preview System**: 30-second preview before purchase
 7. **Payment Gateway**: Stripe integration
 8. **Library**: Organized by voice ID (albums of stories)
@@ -112,7 +113,7 @@ voice_stories/
 │   │   └── success/      # Payment success
 │   ├── components/       # React components
 │   ├── lib/              # Core libraries
-│   │   ├── audioMixer.ts    # FFmpeg integration
+│   │   ├── simpleAudioMixer.ts # Pure JS audio mixing
 │   │   ├── blob.ts          # Cloudflare R2
 │   │   ├── elevenlabs.ts    # Voice cloning/TTS
 │   │   ├── gemini.ts        # Story generation
@@ -120,7 +121,6 @@ voice_stories/
 │   │   └── music.ts         # Music selection
 │   ├── models/           # MongoDB schemas
 │   └── types/            # TypeScript types
-├── ffmpeg-api/           # Remote FFmpeg server
 ├── public/               # Static assets
 │   └── music/            # Curated music library
 ├── documentation/        # This documentation
@@ -147,4 +147,4 @@ For issues or questions:
 
 ---
 
-**Last Updated**: January 14, 2026
+**Last Updated**: February 2, 2026

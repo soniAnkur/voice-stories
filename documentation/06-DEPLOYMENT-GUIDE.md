@@ -10,10 +10,9 @@ Complete guide for deploying Voice Bedtime Tales to production.
 2. [MongoDB Atlas Setup](#mongodb-atlas-setup)
 3. [Cloudflare R2 Setup](#cloudflare-r2-setup)
 4. [Stripe Setup](#stripe-setup)
-5. [FFmpeg VPS Setup](#ffmpeg-vps-setup)
-6. [Vercel Deployment](#vercel-deployment)
-7. [Post-Deployment](#post-deployment)
-8. [Monitoring](#monitoring)
+5. [Vercel Deployment](#vercel-deployment)
+6. [Post-Deployment](#post-deployment)
+7. [Monitoring](#monitoring)
 
 ---
 
@@ -30,8 +29,7 @@ Complete guide for deploying Voice Bedtime Tales to production.
        │
        ├──────▶ Google Gemini API
        ├──────▶ ElevenLabs API
-       ├──────▶ Stripe API
-       └──────▶ FFmpeg VPS (Optional)
+       └──────▶ Stripe API
 ```
 
 ### Deployment Checklist
@@ -39,7 +37,6 @@ Complete guide for deploying Voice Bedtime Tales to production.
 - [ ] MongoDB Atlas cluster created
 - [ ] Cloudflare R2 bucket configured
 - [ ] Stripe account set up (if using payments)
-- [ ] FFmpeg VPS deployed (optional)
 - [ ] Vercel project connected to Git
 - [ ] Environment variables configured
 - [ ] Domain configured (optional)
@@ -220,144 +217,9 @@ Use test cards:
 
 ---
 
-## FFmpeg VPS Setup
-
-### Option 1: Skip FFmpeg API (Use Local)
-
-Leave `FFMPEG_API_URL` empty. Audio mixing will happen in Vercel functions (limited to 10-second execution on free tier).
-
-**Not recommended for production** due to timeout limits.
-
-### Option 2: Deploy FFmpeg API to VPS
-
-#### 1. Get VPS Server
-
-Recommended providers:
-- **DigitalOcean**: $6/month Droplet
-- **Linode**: $5/month Nanode
-- **Hetzner**: €4/month CX11
-
-Specs:
-- **OS**: Ubuntu 22.04 LTS
-- **CPU**: 1 vCPU
-- **RAM**: 1-2 GB
-- **Storage**: 25 GB
-
-#### 2. Install Dependencies
-
-SSH into server:
-```bash
-ssh root@your-server-ip
-```
-
-Install Node.js and FFmpeg:
-```bash
-# Update system
-apt update && apt upgrade -y
-
-# Install Node.js 20
-curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-apt install -y nodejs
-
-# Install FFmpeg
-apt install -y ffmpeg
-
-# Verify installations
-node --version
-npm --version
-ffmpeg -version
-```
-
-#### 3. Deploy FFmpeg API
-
-```bash
-# Clone repository (or upload ffmpeg-api folder)
-git clone <repository-url> voice_stories
-cd voice_stories/ffmpeg-api
-
-# Install dependencies
-npm install
-
-# Create .env file
-cat > .env <<EOF
-FFMPEG_API_KEY=ffmpeg-api-secret-key-2026
-CLOUDFLARE_R2_ACCESS_KEY_ID=your_access_key_id
-CLOUDFLARE_R2_SECRET_ACCESS_KEY=your_secret_access_key
-CLOUDFLARE_R2_ACCOUNT_ID=your_account_id
-CLOUDFLARE_R2_BUCKET_NAME=kids-storybooks-images
-CLOUDFLARE_R2_PUBLIC_URL=https://pub-xxxxx.r2.dev
-EOF
-```
-
-#### 4. Run with PM2 (Process Manager)
-
-```bash
-# Install PM2
-npm install -g pm2
-
-# Start server
-pm2 start index.js --name ffmpeg-api
-
-# Save PM2 config
-pm2 save
-
-# Auto-start on reboot
-pm2 startup
-```
-
-#### 5. Expose with Tunnel (Development)
-
-For quick testing, use LocalTunnel:
-```bash
-npx localtunnel --port 8080
-```
-
-Copy the URL: `https://shaggy-queens-give.loca.lt`
-
-#### 6. Set Up Reverse Proxy (Production)
-
-**Install Nginx**:
-```bash
-apt install -y nginx certbot python3-certbot-nginx
-```
-
-**Configure Nginx**:
-```bash
-cat > /etc/nginx/sites-available/ffmpeg-api <<EOF
-server {
-    listen 80;
-    server_name ffmpeg.yourdomain.com;
-
-    location / {
-        proxy_pass http://localhost:8080;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host \$host;
-        proxy_cache_bypass \$http_upgrade;
-        proxy_read_timeout 300s;
-    }
-}
-EOF
-
-ln -s /etc/nginx/sites-available/ffmpeg-api /etc/nginx/sites-enabled/
-nginx -t
-systemctl restart nginx
-```
-
-**Get SSL Certificate**:
-```bash
-certbot --nginx -d ffmpeg.yourdomain.com
-```
-
-**Update Environment**:
-```bash
-FFMPEG_API_URL=https://ffmpeg.yourdomain.com
-```
-
----
-
 ## Vercel Deployment
+
+**Note**: No external servers (like FFmpeg VPS) are required! Audio mixing runs entirely on Vercel serverless functions using pure JavaScript libraries (mpg123-decoder + lamejs).
 
 ### 1. Connect Git Repository
 
@@ -400,10 +262,6 @@ STRIPE_SECRET_KEY=sk_live_xxxxx  # Use live key for production
 STRIPE_WEBHOOK_SECRET=whsec_xxxxx
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_xxxxx
 STRIPE_PRICE_ID=price_xxxxx
-
-# FFmpeg API (Optional)
-FFMPEG_API_URL=https://ffmpeg.yourdomain.com
-FFMPEG_API_KEY=ffmpeg-api-secret-key-2026
 
 # App URL
 NEXT_PUBLIC_APP_URL=https://your-domain.vercel.app
@@ -598,8 +456,8 @@ For long-running tasks:
 **Error**: `Task timed out after 10 seconds`
 
 **Solution**:
-- Use FFmpeg VPS for audio processing
-- Or upgrade to Vercel Pro (60s timeout)
+- Audio mixing uses pure JavaScript and typically completes within 30-60 seconds
+- Upgrade to Vercel Pro (60s timeout) if needed for longer stories
 
 ### Database Connection Issues
 
@@ -621,4 +479,4 @@ For long-running tasks:
 
 ---
 
-**Last Updated**: January 14, 2026
+**Last Updated**: February 2, 2026

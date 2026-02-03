@@ -38,7 +38,7 @@ Complete technical overview of the Voice Bedtime Tales application.
 │  └────────────────────────────────────────────────────────────┘ │
 │  ┌────────────────────────────────────────────────────────────┐ │
 │  │ Core Libraries                                              │ │
-│  │  gemini.ts  elevenlabs.ts  music.ts  audioMixer.ts         │ │
+│  │  gemini.ts  elevenlabs.ts  music.ts  simpleAudioMixer.ts  │ │
 │  │  mongodb.ts  blob.ts  stripe.ts                            │ │
 │  └────────────────────────────────────────────────────────────┘ │
 └────────────────┬───────────────┬──────────────┬────────────────┘
@@ -57,11 +57,11 @@ Complete technical overview of the Voice Bedtime Tales application.
     │  │ Gemini 2.0   │  │ Voice Clone  │           │
     │  │ Flash        │  │ & TTS v3     │           │
     │  └──────────────┘  └──────────────┘           │
-    │  ┌──────────────┐  ┌──────────────┐           │
-    │  │ Mubert AI    │  │ FFmpeg API   │           │
-    │  │ Music Gen    │  │ VPS Server   │           │
-    │  │ (Optional)   │  │ Audio Mix    │           │
-    │  └──────────────┘  └──────────────┘           │
+    │  ┌──────────────┐                             │
+    │  │ Mubert AI    │                             │
+    │  │ Music Gen    │                             │
+    │  │ (Optional)   │                             │
+    │  └──────────────┘                             │
     └────────────────────────────────────────────────┘
 ```
 
@@ -108,8 +108,10 @@ Complete technical overview of the Voice Bedtime Tales application.
 ### Audio Processing
 | Technology | Purpose |
 |------------|---------|
-| **FFmpeg** | Audio mixing & effects |
-| **Express.js Server** | Remote FFmpeg API (VPS) |
+| **mpg123-decoder** | MP3 decoding (WASM-based) |
+| **@breezystack/lamejs** | MP3 encoding (pure JavaScript) |
+
+*No FFmpeg or external servers required - runs entirely on Vercel serverless!*
 
 ---
 
@@ -459,7 +461,7 @@ await s3Client.send(new PutObjectCommand({
 
 ### Compute Scalability
 - **Vercel**: Auto-scaling serverless functions
-- **FFmpeg API**: Separate VPS, can scale horizontally
+- **Audio Processing**: Pure JS, runs in-process (no external servers)
 - **Background Jobs**: Can move to queue (SQS, BullMQ)
 
 ### Performance Optimizations
@@ -503,7 +505,7 @@ await s3Client.send(new PutObjectCommand({
 - Fallback mechanisms for external APIs
 
 ### Metrics to Monitor
-- **API Response Times**: Gemini, ElevenLabs, FFmpeg
+- **API Response Times**: Gemini, ElevenLabs
 - **Error Rates**: Failed story generations
 - **Storage Usage**: R2 bucket size
 - **Database Performance**: MongoDB query times
@@ -522,6 +524,7 @@ await s3Client.send(new PutObjectCommand({
 │  │  - Serverless Functions (API Routes)     │ │
 │  │  - Static Pages (SSG/SSR)                │ │
 │  │  - Environment Variables                 │ │
+│  │  - Audio Mixing (pure JS, no FFmpeg!)    │ │
 │  └──────────────────────────────────────────┘ │
 └────────────────────────────────────────────────┘
               │                 │
@@ -531,20 +534,10 @@ await s3Client.send(new PutObjectCommand({
 │  - Auto-scaling  │  │  - Global CDN        │
 │  - Replica sets  │  │  - Edge caching      │
 └──────────────────┘  └──────────────────────┘
-
-              ↓
-┌────────────────────────────────────────────────┐
-│              VPS Server (Optional)             │
-│                                                │
-│  ┌──────────────────────────────────────────┐ │
-│  │  FFmpeg API (Express.js)                 │ │
-│  │  - Audio mixing endpoint                 │ │
-│  │  - FFmpeg installed                      │ │
-│  │  - LocalTunnel/ngrok for HTTPS           │ │
-│  └──────────────────────────────────────────┘ │
-└────────────────────────────────────────────────┘
 ```
+
+**Note**: No external VPS or FFmpeg server is required. All audio processing runs directly on Vercel serverless functions using pure JavaScript libraries (mpg123-decoder + lamejs).
 
 ---
 
-**Last Updated**: January 14, 2026
+**Last Updated**: February 2, 2026

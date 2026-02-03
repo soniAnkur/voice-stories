@@ -11,9 +11,8 @@ Complete guide for setting up the Voice Bedtime Tales application for local deve
 3. [Environment Configuration](#environment-configuration)
 4. [Database Setup](#database-setup)
 5. [Running Locally](#running-locally)
-6. [FFmpeg Setup](#ffmpeg-setup)
-7. [Testing](#testing)
-8. [Troubleshooting](#troubleshooting)
+6. [Testing](#testing)
+7. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -26,25 +25,21 @@ Complete guide for setting up the Voice Bedtime Tales application for local deve
 | **Node.js** | 20.x | Runtime environment |
 | **npm** | 10.x | Package manager |
 | **MongoDB** | 6.0+ | Local database (optional) |
-| **FFmpeg** | 4.0+ | Audio processing |
 | **Git** | Any | Version control |
+
+**Note**: FFmpeg is NOT required! Audio mixing uses pure JavaScript libraries (mpg123-decoder + lamejs).
 
 ### Installation Links
 
 - **Node.js**: https://nodejs.org/ (Download LTS version)
 - **MongoDB**: https://www.mongodb.com/try/download/community (or use MongoDB Atlas)
-- **FFmpeg**:
-  - macOS: `brew install ffmpeg`
-  - Windows: https://ffmpeg.org/download.html
-  - Linux: `sudo apt-get install ffmpeg`
 
 ### Verify Installations
 
 ```bash
 node --version    # Should show v20.x
 npm --version     # Should show 10.x
-mongod --version  # Should show 6.0+
-ffmpeg -version   # Should show 4.0+
+mongod --version  # Should show 6.0+ (if using local MongoDB)
 ```
 
 ---
@@ -77,16 +72,6 @@ This installs all packages from `package.json`:
 **Expected output**:
 ```
 added 450 packages in 30s
-```
-
-### 3. Install FFmpeg API Dependencies (Optional)
-
-If you want to run the remote FFmpeg API locally:
-
-```bash
-cd ffmpeg-api
-npm install
-cd ..
 ```
 
 ---
@@ -132,10 +117,6 @@ STRIPE_PRICE_ID=price_xxxxx
 
 # App URL
 NEXT_PUBLIC_APP_URL=http://localhost:3000
-
-# FFmpeg API (Optional - leave empty for local FFmpeg)
-FFMPEG_API_URL=
-FFMPEG_API_KEY=
 
 # Feature Flags (Development)
 BYPASS_PAYMENT=true          # Skip Stripe payment
@@ -258,70 +239,6 @@ You should see the Voice Bedtime Tales home page.
 
 ---
 
-## FFmpeg Setup
-
-### Local FFmpeg (Development)
-
-#### macOS
-```bash
-brew install ffmpeg
-```
-
-#### Linux (Ubuntu/Debian)
-```bash
-sudo apt-get update
-sudo apt-get install ffmpeg
-```
-
-#### Windows
-1. Download from https://ffmpeg.org/download.html
-2. Extract to `C:\ffmpeg`
-3. Add to PATH: `C:\ffmpeg\bin`
-
-#### Verify Installation
-```bash
-ffmpeg -version
-ffprobe -version
-```
-
-### Remote FFmpeg API (Optional)
-
-If you want to test the remote API locally:
-
-#### 1. Start FFmpeg API Server
-
-```bash
-cd ffmpeg-api
-node index.js
-```
-
-**Expected output**:
-```
-FFmpeg API Server running on port 8080
-FFmpeg version: 4.4.2
-```
-
-#### 2. Expose with Tunnel (LocalTunnel or ngrok)
-
-**LocalTunnel**:
-```bash
-npx localtunnel --port 8080
-```
-
-**ngrok**:
-```bash
-ngrok http 8080
-```
-
-#### 3. Update Environment
-
-```bash
-FFMPEG_API_URL=https://your-tunnel-url.loca.lt
-FFMPEG_API_KEY=ffmpeg-api-secret-key-2026
-```
-
----
-
 ## Testing
 
 ### Test Story Generation
@@ -400,18 +317,6 @@ Check Cloudflare R2 dashboard:
 mongod --dbpath ~/data/db
 
 # Or update MONGODB_URI to MongoDB Atlas
-```
-
-### FFmpeg Not Found
-
-**Error**: `Error: spawn ffmpeg ENOENT`
-
-**Solution**:
-```bash
-# Install FFmpeg
-brew install ffmpeg  # macOS
-
-# Or set FFMPEG_API_URL to use remote API
 ```
 
 ### ElevenLabs API Error
@@ -515,4 +420,4 @@ NODE_ENV=development
 
 ---
 
-**Last Updated**: January 14, 2026
+**Last Updated**: February 2, 2026
