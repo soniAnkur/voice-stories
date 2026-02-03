@@ -283,17 +283,17 @@ POST /api/story/preview
 └─────────────────────────────────────────────┘
     ↓
 ┌─────────────────────────────────────────────┐
-│ 6. MIX AUDIO (FFmpeg)                       │
+│ 6. MIX AUDIO (Pure JS Mixer)                       │
 │    src/lib/audioMixer.ts:                   │
 │    mixNarrationWithMusic()                  │
 │                                              │
 │    Local Mode (Development):                │
-│    - Run FFmpeg via child_process           │
+│    - Run Pure JS Mixer via child_process           │
 │    - Build filter complex                   │
 │    - Mix narration + music                  │
 │                                              │
 │    Remote Mode (Production):                │
-│    POST [FFMPEG_API_URL]/api/mix            │
+│    POST [PURE_JS_API_URL]/api/mix            │
 │    {                                         │
 │      "narrationUrl": "https://...",         │
 │      "musicUrl": "https://...",             │
@@ -304,7 +304,7 @@ POST /api/story/preview
 │      "fadeOutDuration": 2                   │
 │    }                                         │
 │                                              │
-│    FFmpeg Filter:                            │
+│    Pure JS Mixer Filter:                            │
 │    - Voice: lowpass, echo, dreamy effects   │
 │    - Music: loop, trim, fade in/out         │
 │    - Sidechain: compress music when voice   │
@@ -355,7 +355,7 @@ User Hears 30-Second Preview with Music
 - **Gemini**: 2-4 seconds
 - **ElevenLabs**: 3-5 seconds
 - **Music**: 1-3 seconds
-- **FFmpeg Mix**: 5-15 seconds
+- **Pure JS Mixer Mix**: 5-15 seconds
 - **Storage**: 2-3 seconds
 - **Total**: ~15-30 seconds
 
@@ -478,7 +478,7 @@ Body: { storyId: "..." }
 └─────────────────────────────────────────────┘
     ↓
 ┌─────────────────────────────────────────────┐
-│ 6. MIX AUDIO (FFmpeg)                       │
+│ 6. MIX AUDIO (Pure JS Mixer)                       │
 │    Same process as preview                  │
 │    But longer duration:                     │
 │    - fadeInDuration: 2 seconds              │
@@ -515,7 +515,7 @@ User Can Listen to Full 10-Minute Story
 - **Gemini**: 5-10 seconds
 - **ElevenLabs**: 30-60 seconds
 - **Music**: 1-3 seconds
-- **FFmpeg Mix**: 20-45 seconds
+- **Pure JS Mixer Mix**: 20-45 seconds
 - **Storage**: 5-10 seconds
 - **Total**: ~60-120 seconds (1-2 minutes)
 
@@ -700,7 +700,7 @@ Clicks "Library" or navigates to `/library`
     │
     ├─→ Mubert/Library → Background Music MP3
     │
-    ├─→ FFmpeg API ──→ Mixed Audio MP3
+    ├─→ Pure JS Mixer API ──→ Mixed Audio MP3
     │
     └─→ MongoDB ────→ Story Record
          │
@@ -840,8 +840,8 @@ Clicks "Library" or navigates to `/library`
    - Return error to user
    - Suggest re-recording voice or trying again
 
-3. **FFmpeg Processing Error**:
-   - Try local FFmpeg if remote fails
+3. **Pure JS Mixer Processing Error**:
+   - Try local Pure JS Mixer if remote fails
    - If both fail, return narration without music
 
 4. **Payment Webhook Delay**:

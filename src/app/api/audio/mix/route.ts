@@ -2,26 +2,17 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { Story } from "@/models/Story";
 import { getBackgroundMusic } from "@/lib/music";
-import { mixNarrationWithMusic, simpleMix, isFFmpegAvailable } from "@/lib/audioMixer";
+import { mixAudioSimple } from "@/lib/simpleAudioMixer";
 import { uploadAudio } from "@/lib/blob";
 
 export async function POST(request: Request) {
   try {
-    const { storyId, musicVolume = 0.15, enableDucking = true } = await request.json();
+    const { storyId, musicVolume = 0.20 } = await request.json();
 
     if (!storyId) {
       return NextResponse.json(
         { error: "storyId required" },
         { status: 400 }
-      );
-    }
-
-    // Check FFmpeg availability
-    const ffmpegAvailable = await isFFmpegAvailable();
-    if (!ffmpegAvailable) {
-      return NextResponse.json(
-        { error: "FFmpeg not available on server" },
-        { status: 500 }
       );
     }
 
@@ -59,26 +50,17 @@ export async function POST(request: Request) {
 
     const narrationBuffer = Buffer.from(await narrationResponse.arrayBuffer());
 
-    // Mix audio
-    let mixedBuffer: Buffer;
-
-    if (enableDucking) {
-      const result = await mixNarrationWithMusic({
-        narrationBuffer,
-        musicUrl,
-        musicVolume,
-        ducking: true,
-        duckingAmount: 0.5,
-        fadeInDuration: 2,
-        fadeOutDuration: 3,
-      });
-      mixedBuffer = result.buffer;
-    } else {
-      mixedBuffer = await simpleMix(narrationBuffer, musicUrl, musicVolume);
-    }
+    // Mix audio using simple JS mixer (no FFmpeg required)
+    const result = await mixAudioSimple({
+      narrationBuffer,
+      musicUrl,
+      musicVolume,
+      fadeInDuration: 2,
+      fadeOutDuration: 3,
+    });
 
     // Upload mixed audio
-    const mixedAudioUrl = await uploadAudio(mixedBuffer, storyId, "full");
+    const mixedAudioUrl = await uploadAudio(result.buffer, storyId, "full");
 
     // Update story with mixed audio URL
     await Story.findByIdAndUpdate(storyId, {

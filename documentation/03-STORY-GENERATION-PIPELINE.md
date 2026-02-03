@@ -10,7 +10,7 @@ Detailed breakdown of how stories are composed, narrated, scored with music, and
 2. [Story Composition (Google Gemini)](#story-composition-google-gemini)
 3. [Music Generation & Selection](#music-generation--selection)
 4. [Voice Narration (ElevenLabs)](#voice-narration-elevenlabs)
-5. [Audio Mixing (FFmpeg)](#audio-mixing-ffmpeg)
+5. [Audio Mixing (Pure JavaScript)](#audio-mixing-pure-javascript)
 6. [Processing Times](#processing-times)
 
 ---
@@ -39,9 +39,9 @@ Input: Child Details + Theme
 └──────────────────────────┘
     ↓
 ┌──────────────────────────┐
-│ 4. AUDIO MIXING          │  FFmpeg
-│    Combine narration +   │  Sidechain compression
-│    music with effects    │  Dreamy filters
+│ 4. AUDIO MIXING          │  Pure JavaScript
+│    Combine narration +   │  mpg123-decoder + lamejs
+│    music with fades      │  No FFmpeg required!
 └──────────────────────────┘
     ↓
 Output: 30-second preview or 10-minute full story MP3
@@ -455,166 +455,124 @@ export async function textToSpeech(
 
 ---
 
-## Audio Mixing (FFmpeg)
+## Audio Mixing (Pure JavaScript)
 
 ### Overview
-**File**: `src/lib/audioMixer.ts`
-**Purpose**: Combine narration + music with professional audio effects
+**File**: `src/lib/simpleAudioMixer.ts`
+**Purpose**: Combine narration + background music using pure JavaScript
+**Dependencies**: `mpg123-decoder` (WASM), `@breezystack/lamejs`
 
-### Three-Tier Processing Strategy
+### Why Pure JavaScript?
 
-#### Tier 1: Local FFmpeg (Development)
-**Function**: `mixNarrationWithMusicLocal()`
-**File**: `src/lib/audioMixer.ts` (lines 148-214)
+Previously, audio mixing required FFmpeg which had significant drawbacks:
+- Required FFmpeg installed locally for development
+- Needed a separate VPS running FFmpeg for production (Vercel can't run FFmpeg)
+- Keeping both environments in sync was difficult and error-prone
 
-Uses native FFmpeg via Node.js `child_process.spawn()`
+The new approach uses **pure JavaScript** libraries that work everywhere:
+- ✅ Works on Vercel serverless (no native dependencies)
+- ✅ Works in local development (no FFmpeg installation needed)
+- ✅ Single codebase for all environments
+- ✅ Faster processing (no FFmpeg process spawning)
 
-#### Tier 2: Remote FFmpeg API (Production/Vercel)
-**Function**: `mixNarrationWithMusicRemote()`
-**File**: `src/lib/audioMixer.ts` (lines 66-143)
+### Processing Pipeline
 
-**API Endpoint**: `POST [FFMPEG_API_URL]/api/mix`
-
-**Request Payload**:
-```json
-{
-  "narrationUrl": "https://r2.dev/narration.mp3",
-  "musicUrl": "https://r2.dev/music.mp3",
-  "musicVolume": 0.25,
-  "fadeInDuration": 2,
-  "fadeOutDuration": 3,
-  "ducking": true,
-  "duckingAmount": 0.5,
-  "applyDreamyEffects": true
-}
 ```
-
-**Remote Server**: VPS with FFmpeg installed (`/ffmpeg-api/index.js`)
-
-#### Tier 3: Fallback
-Returns narration-only MP3 if FFmpeg unavailable
+1. Decode narration MP3 → PCM (mpg123-decoder)
+2. Fetch & decode music MP3 → PCM
+3. Resample music if sample rates differ
+4. Loop music to match narration length
+5. Apply fade in/out to music
+6. Mix PCM streams (narration 100%, music 20%)
+7. Soft clip to prevent distortion
+8. Encode final PCM → MP3 (lamejs)
+```
 
 ### Mixing Parameters
 
 **Default Options**:
 ```typescript
 {
-  musicVolume: 0.25,          // Music at 25% of narration
-  ducking: true,              // Enable sidechain compression
-  duckingAmount: 0.5,         // Reduce music to 50% when voice plays
-  fadeInDuration: 2,          // 2-second fade in
-  fadeOutDuration: 3,         // 3-second fade out
-  applyDreamyEffects: true    // Add echo/lowpass to voice
+  musicVolume: 0.20,       // Music at 20% of narration
+  fadeInDuration: 2,       // 2-second fade in
+  fadeOutDuration: 3       // 3-second fade out
 }
 ```
 
-**Preview vs Full**:
-| Type | Fade In | Fade Out | Duration |
-|------|---------|----------|----------|
-| Preview | 1s | 2s | ~60s |
-| Full | 2s | 3s | ~600s |
+**Note**: Unlike the previous FFmpeg implementation, there is no sidechain compression (ducking). The music plays at a constant volume, which works well for bedtime stories as the lower volume level (20%) keeps music subtle throughout.
 
-### FFmpeg Filter Complex
+### Main Function
 
-**Function**: `buildMixFilter()`
-**File**: `src/lib/audioMixer.ts` (lines 264-326)
+**Function**: `mixAudioSimple()`
+**File**: `src/lib/simpleAudioMixer.ts`
 
-**Complete Filter Chain**:
+```typescript
+export async function mixAudioSimple(options: SimpleMixOptions): Promise<SimpleMixResult> {
+  const {
+    narrationBuffer,
+    musicUrl,
+    musicVolume = 0.20,
+    fadeInDuration = 2,
+    fadeOutDuration = 3,
+  } = options;
 
-```bash
-# Input: [0:a] = narration, [1:a] = music
+  // 1. Decode narration MP3 to PCM
+  const narrationPcm = await decodeMp3(narrationBuffer);
 
-# 1. VOICE PROCESSING (Dreamy Effects)
-[0:a]lowpass=f=8000,
-     aecho=0.8:0.5:100|200|300:0.5|0.35|0.2,
-     aecho=0.8:0.4:500|700:0.3|0.2,
-     aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo[voice]
+  // 2. Fetch and decode music
+  const musicBuffer = await fetchMusic(musicUrl);
+  const musicPcm = await decodeMp3(musicBuffer);
 
-# 2. MUSIC PROCESSING (Loop & Fade)
-[1:a]aloop=loop=-1:size=2e+09,
-     atrim=0:600,
-     volume=0.25,
-     afade=t=in:st=0:d=2,
-     afade=t=out:st=597:d=3[musicfaded]
+  // 3. Resample music if needed
+  // 4. Loop music to match narration length
+  // 5. Apply fade in/out to music
+  // 6. Mix at specified volumes
+  // 7. Encode to MP3
 
-# 3. SIDECHAIN COMPRESSION (Ducking)
-[musicfaded][voice]sidechaincompress=threshold=0.02:ratio=4:attack=50:release=400:level_sc=0.5[musicducked]
-
-# 4. MIX & NORMALIZE
-[voice][musicducked]amix=inputs=2:duration=first:dropout_transition=2,
-                    loudnorm=I=-16:TP=-1.5:LRA=11[final]
+  return { buffer: mp3Buffer, duration };
+}
 ```
 
-**Effect Breakdown**:
+### Audio Processing Details
 
-1. **Voice Processing**:
-   - `lowpass=f=8000`: Cut harsh high frequencies, warmer sound
-   - `aecho`: Double echo effect for dreamy atmosphere
-     - First echo: 100-300ms delays, 0.5-0.2 decay
-     - Second echo: 500-700ms delays, 0.3-0.2 decay
-   - `aformat`: Ensure consistent format (44.1kHz stereo)
+#### MP3 Decoding (mpg123-decoder)
+- WASM-based decoder, works in Node.js
+- Outputs Float32Array PCM samples
+- Supports mono and stereo
 
-2. **Music Processing**:
-   - `aloop`: Loop indefinitely
-   - `atrim`: Cut to exact duration (match narration)
-   - `volume`: Set to 25% (0.25)
-   - `afade in`: 2-second fade from silence
-   - `afade out`: 3-second fade to silence (3 seconds before end)
+#### Fade Effects
+- **Fade In**: Linear ramp from 0 to full volume over 2 seconds
+- **Fade Out**: Linear ramp from full volume to 0 over 3 seconds (starts 3s before end)
 
-3. **Sidechain Compression**:
-   - `threshold=0.02`: Very sensitive detection (2% of max)
-   - `ratio=4`: 4:1 compression ratio
-   - `attack=50`: Fast response (50ms)
-   - `release=400`: Smooth return (400ms)
-   - `level_sc=0.5`: Music drops to 50% when voice detected
+#### Mixing
+- Narration: 100% volume (1.0)
+- Music: 20% volume (0.20)
+- Soft clipping to prevent distortion when signals combine
 
-4. **Final Mix**:
-   - `amix`: Combine voice + ducked music
-   - `duration=first`: Use narration duration
-   - `dropout_transition=2`: Smooth 2-second transition
-   - `loudnorm`: Loudness normalization
-     - `I=-16`: Target integrated loudness (LUFS)
-     - `TP=-1.5`: True peak limit (prevent clipping)
-     - `LRA=11`: Loudness range
+#### MP3 Encoding (lamejs)
+- Pure JavaScript LAME encoder
+- Output: 192 kbps stereo MP3
+- Block size: 1152 samples per encode call
 
-**Output Specifications**:
-```bash
-ffmpeg ... -c:a libmp3lame -b:a 192k -ar 44100 -ac 2 output.mp3
-```
-- **Codec**: MP3 (libmp3lame)
+### Output Specifications
+- **Format**: MP3
 - **Bitrate**: 192 kbps
-- **Sample Rate**: 44100 Hz
-- **Channels**: Stereo (2)
+- **Sample Rate**: Matches narration (typically 44100 Hz)
+- **Channels**: Stereo
 
-### Remote FFmpeg API Server
+### Comparison: Old vs New
 
-**File**: `/ffmpeg-api/index.js`
+| Feature | Old (FFmpeg) | New (Pure JS) |
+|---------|--------------|---------------|
+| Sidechain Compression | ✅ Yes | ❌ No |
+| Dreamy Voice Effects | ✅ Echo/Lowpass | ❌ No |
+| LUFS Normalization | ✅ Yes | ❌ No |
+| Serverless Compatible | ❌ No | ✅ Yes |
+| External Dependencies | FFmpeg binary | None |
+| Processing Speed | Slower | Faster |
+| Music Volume | 25% + ducking | 20% constant |
 
-**Endpoints**:
-- `GET /api/health` - Health check
-- `POST /api/mix` - Audio mixing (requires Bearer token)
-
-**Process** (lines 11-107):
-```javascript
-1. Validate inputs (URLs, parameters)
-2. Create temporary directory
-3. Download narration and music in parallel
-4. Get audio duration (ffprobe)
-5. Build FFmpeg filter complex
-6. Run FFmpeg mixing
-7. Upload result to Cloudflare R2
-8. Return public URL + processing time
-9. Cleanup temporary files
-```
-
-**Example Response**:
-```json
-{
-  "success": true,
-  "mixedUrl": "https://r2.dev/mixed/job_abc123.mp3",
-  "processingTime": "12.5s"
-}
-```
+The simplified approach trades some audio polish for operational simplicity and reliability.
 
 ---
 
@@ -627,9 +585,9 @@ ffmpeg ... -c:a libmp3lame -b:a 192k -ar 44100 -ac 2 output.mp3
 | Gemini Story Gen | 2-4s | ~100 words |
 | Music Selection | 1-3s | Library lookup or Mubert |
 | ElevenLabs TTS | 3-5s | ~100 words input |
-| FFmpeg Mix | 5-10s | 60-second audio |
-| R2 Upload | 1-2s | ~2-3 MB file |
-| **Total** | **12-24s** | User waits ~15-30s |
+| JS Audio Mix | 3-8s | 60-second audio (pure JS) |
+| Blob Upload | 1-2s | ~2-3 MB file |
+| **Total** | **10-22s** | User waits ~15-25s |
 
 ### Full Story (10 minutes)
 
@@ -638,9 +596,9 @@ ffmpeg ... -c:a libmp3lame -b:a 192k -ar 44100 -ac 2 output.mp3
 | Gemini Story Gen | 5-10s | 1400-1600 words |
 | Music Selection | 1-3s | Library lookup or Mubert |
 | ElevenLabs TTS | 30-60s | 1500 words input |
-| FFmpeg Mix | 20-45s | 600-second audio |
-| R2 Upload | 5-10s | ~15-20 MB file |
-| **Total** | **60-128s** | User waits 1-2 minutes |
+| JS Audio Mix | 15-30s | 600-second audio (pure JS) |
+| Blob Upload | 5-10s | ~15-20 MB file |
+| **Total** | **55-113s** | User waits 1-2 minutes |
 
 ### Optimization Opportunities
 
@@ -665,4 +623,4 @@ ffmpeg ... -c:a libmp3lame -b:a 192k -ar 44100 -ac 2 output.mp3
 
 ---
 
-**Last Updated**: January 14, 2026
+**Last Updated**: February 2, 2026

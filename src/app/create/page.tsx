@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { VoiceRecorder } from "@/components/VoiceRecorder";
+
+const EMAIL_STORAGE_KEY = "voiceStories_savedEmail";
 
 const THEMES = [
   { id: "adventure", label: "Adventure" },
@@ -66,6 +68,14 @@ export default function CreateStoryPage() {
     theme: "adventure",
   });
 
+  // Load saved email from localStorage on mount
+  useEffect(() => {
+    const savedEmail = localStorage.getItem(EMAIL_STORAGE_KEY);
+    if (savedEmail) {
+      setFormData((prev) => ({ ...prev, email: savedEmail }));
+    }
+  }, []);
+
   const updateField = <K extends keyof FormData>(key: K, value: FormData[K]) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
@@ -94,6 +104,9 @@ export default function CreateStoryPage() {
       nextStep();
       return;
     }
+
+    // Save email to localStorage for future use
+    localStorage.setItem(EMAIL_STORAGE_KEY, formData.email);
 
     setLoadingChildren(true);
     try {
