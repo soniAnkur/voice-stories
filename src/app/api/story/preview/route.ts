@@ -4,9 +4,10 @@ import { User } from "@/models/User";
 import { Story } from "@/models/Story";
 import { generatePreviewStory } from "@/lib/gemini";
 import { textToSpeech } from "@/lib/elevenlabs";
-import { uploadAudio } from "@/lib/blob";
+import { uploadAudio, uploadImage } from "@/lib/blob";
 import { getBackgroundMusic } from "@/lib/music";
 import { mixAudioSimple } from "@/lib/simpleAudioMixer";
+import { generateCoverImage } from "@/lib/imageGen";
 
 // Story generation involves Gemini + ElevenLabs + storage which can take 30-60s
 export const maxDuration = 60;
@@ -82,70 +83,108 @@ export async function POST(request: Request) {
     console.log(`   Story title: "${storyContent.title}"`);
     console.log(`   Story length: ${storyContent.story.length} chars`);
 
-    // Generate audio with ElevenLabs (speed: 0.7 = slowest)
+    // Generate audio and cover image in parallel
     console.log(`   Generating audio with ElevenLabs (speed: 0.7)...`);
-    const narrationBuffer = await textToSpeech(
-      storyContent.story,
-      elevenlabsVoiceId
-    );
+    console.log(`   Generating cover image with Gemini...`);
 
-    // Mix narration with background music (pure JS - no FFmpeg needed)
-    let finalAudioBuffer = narrationBuffer;
-    let musicSource: "library" | "mubert" | undefined;
-    let hasMusicMixed = false;
-
-    try {
-      // Get background music
-      const musicResult = await getBackgroundMusic(
-        theme || "adventure",
-        storyContent.backgroundMusicPrompt,
-        60 // 1 minute for preview
+    const audioPromise = (async () => {
+      const narrationBuffer = await textToSpeech(
+        storyContent.story,
+        elevenlabsVoiceId
       );
 
-      // Mix narration with background music using simple JS mixer
-      const mixResult = await mixAudioSimple({
-        narrationBuffer: Buffer.from(narrationBuffer),
-        musicUrl: musicResult.url,
-        musicVolume: 0.20, // Background music volume (no ducking)
-        fadeInDuration: 2,
-        fadeOutDuration: 3,
-      });
+      // Mix narration with background music (pure JS - no FFmpeg needed)
+      let finalAudioBuffer = narrationBuffer;
+      let musicSource: "library" | "mubert" | undefined;
+      let hasMusicMixed = false;
 
-      finalAudioBuffer = mixResult.buffer;
-      musicSource = musicResult.source;
-      hasMusicMixed = true;
+      try {
+        const musicResult = await getBackgroundMusic(
+          theme || "adventure",
+          storyContent.backgroundMusicPrompt,
+          60 // 1 minute for preview
+        );
 
-      console.log(`Preview: Mixed audio with ${musicSource} music (simple mixer)`);
-    } catch (mixError) {
-      console.warn("Preview: Music mixing failed, using narration only:", mixError);
-      // Continue with narration-only audio
-    }
+        const mixResult = await mixAudioSimple({
+          narrationBuffer: Buffer.from(narrationBuffer),
+          musicUrl: musicResult.url,
+          musicVolume: 0.20,
+          fadeInDuration: 2,
+          fadeOutDuration: 3,
+        });
 
-    // Upload audio to Vercel Blob with meaningful filename
-    const previewUrl = await uploadAudio(
-      finalAudioBuffer,
-      story._id.toString(),
-      "preview",
-      {
-        childName,
-        theme: theme || "adventure",
-        voiceId: elevenlabsVoiceId,
+        finalAudioBuffer = mixResult.buffer;
+        musicSource = musicResult.source;
+        hasMusicMixed = true;
+        console.log(`Preview: Mixed audio with ${musicSource} music (simple mixer)`);
+      } catch (mixError) {
+        console.warn("Preview: Music mixing failed, using narration only:", mixError);
       }
-    );
+
+      const previewUrl = await uploadAudio(
+        finalAudioBuffer,
+        story._id.toString(),
+        "preview",
+        {
+          childName,
+          theme: theme || "adventure",
+          voiceId: elevenlabsVoiceId,
+        }
+      );
+
+      return { previewUrl, musicSource, hasMusicMixed };
+    })();
+
+    const imagePromise = (async () => {
+      try {
+        const imageBuffer = await generateCoverImage(
+          childName,
+          childAge,
+          interests,
+          theme || "adventure"
+        );
+        if (imageBuffer) {
+          const coverImageUrl = await uploadImage(
+            imageBuffer,
+            story._id.toString(),
+            { childName, theme: theme || "adventure" }
+          );
+          console.log(`   Cover image uploaded: ${coverImageUrl}`);
+          return coverImageUrl;
+        }
+        return null;
+      } catch (err) {
+        console.warn("Cover image generation failed:", err);
+        return null;
+      }
+    })();
+
+    // Wait for both - image failure doesn't block audio
+    const [audioResult, coverImageUrl] = await Promise.all([
+      audioPromise,
+      imagePromise,
+    ]);
+
+    const { previewUrl, musicSource, hasMusicMixed } = audioResult;
 
     // Update story with preview data
-    await Story.findByIdAndUpdate(story._id, {
+    const updateData: Record<string, unknown> = {
       previewText: storyContent.story,
       previewUrl,
       backgroundMusicPrompt: storyContent.backgroundMusicPrompt,
       musicSource,
       hasMusicMixed,
-    });
+    };
+    if (coverImageUrl) {
+      updateData.coverImageUrl = coverImageUrl;
+    }
+    await Story.findByIdAndUpdate(story._id, updateData);
 
     return NextResponse.json({
       storyId: story._id.toString(),
       title: storyContent.title,
       previewUrl,
+      coverImageUrl: coverImageUrl || null,
       hasMusicMixed,
     });
   } catch (error) {

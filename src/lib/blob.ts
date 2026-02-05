@@ -132,6 +132,39 @@ export async function uploadAudio(
 }
 
 /**
+ * Upload a cover image to Cloudflare R2
+ */
+export async function uploadImage(
+  buffer: Buffer,
+  storyId: string,
+  metadata?: {
+    childName?: string;
+    theme?: string;
+  }
+): Promise<string> {
+  const sanitize = (str: string) =>
+    str
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "-")
+      .slice(0, 20);
+
+  let filename: string;
+  if (metadata?.childName) {
+    const childName = sanitize(metadata.childName);
+    const theme = metadata.theme ? sanitize(metadata.theme) : "story";
+    const timestamp = Date.now();
+    filename = `${childName}_${theme}_${timestamp}.png`;
+  } else {
+    filename = `${storyId}.png`;
+  }
+
+  const key = `voice-stories/covers/${filename}`;
+  console.log(`Uploading cover image: ${key}`);
+
+  return uploadToR2(buffer, key, "image/png");
+}
+
+/**
  * Delete a file from Cloudflare R2
  */
 export async function deleteFile(url: string): Promise<void> {

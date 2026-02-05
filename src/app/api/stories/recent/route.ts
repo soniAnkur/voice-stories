@@ -23,6 +23,7 @@ export async function GET() {
       theme: story.theme || "adventure",
       previewUrl: story.previewUrl,
       fullAudioUrl: story.fullAudioUrl,
+      coverImageUrl: story.coverImageUrl,
       status: story.status,
       createdAt: story.createdAt?.toISOString() || new Date().toISOString(),
       updatedAt: story.updatedAt?.toISOString() || new Date().toISOString(),

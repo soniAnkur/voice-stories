@@ -61,7 +61,7 @@ export function MiniPlayer() {
           className={`w-12 h-12 rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center flex-shrink-0 shadow-md overflow-hidden`}
         >
           <img
-            src={`/themes/${theme}.jpg`}
+            src={state.currentStory.coverImageUrl || `/themes/${theme}.jpg`}
             alt={theme}
             className="w-full h-full object-cover"
             onError={(e) => {

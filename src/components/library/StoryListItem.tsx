@@ -43,7 +43,7 @@ export function StoryListItem({ story, index, queue }: StoryListItemProps) {
     >
       {/* Theme Image / Play-Pause Icon */}
       <div
-        className={`w-10 h-10 rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center flex-shrink-0 transition-transform overflow-hidden`}
+        className={`w-10 h-10 rounded-lg bg-gradient-to-br ${gradient} flex items-center justify-center flex-shrink-0 transition-transform overflow-hidden`}
       >
         {isPlaying ? (
           <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -55,11 +55,10 @@ export function StoryListItem({ story, index, queue }: StoryListItemProps) {
           </svg>
         ) : (
           <img
-            src={`/themes/${theme}.jpg`}
+            src={story.coverImageUrl || `/themes/${theme}.jpg`}
             alt={theme}
             className="w-full h-full object-cover"
             onError={(e) => {
-              // Fallback to gradient if image fails to load
               (e.target as HTMLImageElement).style.display = "none";
             }}
           />
