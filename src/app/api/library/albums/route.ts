@@ -65,6 +65,7 @@ export async function GET() {
               _id: { $toString: "$_id" },
               theme: "$theme",
               childName: "$childName",
+              coverImageUrl: "$coverImageUrl",
             },
           },
         },

@@ -8,6 +8,7 @@ export interface StoryForPlayer {
   theme: string;
   previewUrl?: string;
   fullAudioUrl?: string;
+  coverImageUrl?: string;
   status: "preview" | "paid" | "generating" | "complete" | "failed";
   createdAt: string;
   updatedAt: string;
@@ -22,7 +23,7 @@ export interface Album {
   storyCount: number;
   latestStoryDate: string;
   // First 4 stories for album art grid
-  coverStories: Pick<StoryForPlayer, "_id" | "theme" | "childName">[];
+  coverStories: Pick<StoryForPlayer, "_id" | "theme" | "childName" | "coverImageUrl">[];
 }
 
 export interface PlayerState {

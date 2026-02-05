@@ -15,6 +15,7 @@ export interface IStory extends Document {
   previewText?: string;
   previewUrl?: string;
   fullAudioUrl?: string;
+  coverImageUrl?: string;
   backgroundMusicPrompt?: string;
   // Music mixing fields
   musicTrackId?: string;
@@ -69,6 +70,9 @@ const StorySchema = new Schema<IStory>(
       type: String,
     },
     fullAudioUrl: {
+      type: String,
+    },
+    coverImageUrl: {
       type: String,
     },
     backgroundMusicPrompt: {

@@ -18,12 +18,15 @@ interface AlbumCardProps {
 }
 
 export function AlbumCard({ album }: AlbumCardProps) {
-  // Get themes from cover stories for the 2x2 grid
-  const coverThemes = album.coverStories.map((story) => story.theme || "adventure");
+  // Get cover data from stories for the 2x2 grid
+  const coverData = album.coverStories.map((story) => ({
+    theme: story.theme || "adventure",
+    coverImageUrl: story.coverImageUrl,
+  }));
 
   // Fill to 4 items for the grid
-  while (coverThemes.length < 4) {
-    coverThemes.push(coverThemes[0] || "adventure");
+  while (coverData.length < 4) {
+    coverData.push(coverData[0] || { theme: "adventure", coverImageUrl: undefined });
   }
 
   // Truncate email for display
@@ -47,8 +50,8 @@ export function AlbumCard({ album }: AlbumCardProps) {
       <div className="glass-card p-4 hover:scale-[1.02] transition-transform cursor-pointer">
         {/* 2x2 Album Art Grid - Glassmorphic */}
         <div className="grid grid-cols-2 gap-1 rounded-xl overflow-hidden mb-3">
-          {coverThemes.slice(0, 4).map((theme, index) => {
-            const color = THEME_COLORS[theme] || THEME_COLORS.adventure;
+          {coverData.slice(0, 4).map((item, index) => {
+            const color = THEME_COLORS[item.theme] || THEME_COLORS.adventure;
             return (
               <div
                 key={index}
@@ -58,14 +61,14 @@ export function AlbumCard({ album }: AlbumCardProps) {
                   backdropFilter: "blur(8px)",
                 }}
               >
-                {/* Subtle color accent */}
+                {/* Subtle color accent fallback */}
                 <div
                   className="absolute inset-0"
                   style={{ background: color }}
                 />
                 <img
-                  src={`/themes/${theme}.jpg`}
-                  alt={theme}
+                  src={item.coverImageUrl || `/themes/${item.theme}.jpg`}
+                  alt={item.theme}
                   className="w-full h-full object-cover relative z-10"
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = "none";

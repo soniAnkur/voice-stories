@@ -105,10 +105,10 @@ export function FullPlayer() {
         {/* Album Art */}
         <div className="flex-1 flex items-center justify-center py-8">
           <div
-            className={`w-64 h-64 rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center shadow-2xl overflow-hidden`}
+            className={`w-64 h-64 rounded-3xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-2xl overflow-hidden`}
           >
             <img
-              src={`/themes/${theme}.jpg`}
+              src={state.currentStory.coverImageUrl || `/themes/${theme}.jpg`}
               alt={theme}
               className="w-full h-full object-cover"
               onError={(e) => {

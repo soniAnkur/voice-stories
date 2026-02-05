@@ -2,11 +2,24 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Mountain, PawPrint, Rocket, Waves, Sparkles, TreePine } from "lucide-react";
 import { HomeHeader } from "@/components/home/HomeHeader";
 import { PopularSection } from "@/components/home/PopularSection";
 import { CreateStoryCard } from "@/components/home/CreateStoryCard";
 import { usePlayer } from "@/components/player/PlayerProvider";
 import type { StoryForPlayer } from "@/types/player";
+import type { LucideIcon } from "lucide-react";
+
+// Lucide icon mapping for each story theme
+const THEME_ICONS: Record<string, LucideIcon> = {
+  adventure: Mountain,
+  animals: PawPrint,
+  space: Rocket,
+  ocean: Waves,
+  fairy: Sparkles,
+  dinosaurs: TreePine,
+};
 
 // Demo stories for showcasing the UI when no real stories exist
 const DEMO_STORIES: StoryForPlayer[] = [
@@ -110,16 +123,13 @@ export default function Home() {
         if (data.stories && data.stories.length > 0) {
           setStories(data.stories);
         } else {
-          // Use demo stories if no real stories exist
           setStories(DEMO_STORIES);
         }
       } else {
-        // Use demo stories on error
         setStories(DEMO_STORIES);
       }
     } catch (error) {
       console.error("Error fetching stories:", error);
-      // Use demo stories on error
       setStories(DEMO_STORIES);
     } finally {
       setLoading(false);
@@ -127,11 +137,9 @@ export default function Home() {
   };
 
   const handleStoryClick = (story: StoryForPlayer) => {
-    // For demo stories, just show them (no audio)
     if (story._id.startsWith("demo-")) {
       return;
     }
-    // For real stories, play them
     dispatch({ type: "PLAY_STORY", story, queue: stories });
   };
 
@@ -139,17 +147,15 @@ export default function Home() {
     router.push("/create");
   };
 
-  // Featured stories (first 4 or 3 + create card)
+  // Featured stories (first 3 + create card)
   const featuredStories = stories.slice(0, 3);
   // Popular stories (rest)
   const popularStories = stories.slice(3);
 
   return (
     <div className="page-container">
-      {/* Home Header with Unlock Button */}
       <HomeHeader />
 
-      {/* Main Content */}
       <main className={state.isMiniVisible ? "content-with-player" : ""}>
         {loading ? (
           <div className="flex items-center justify-center py-20">
@@ -157,17 +163,20 @@ export default function Home() {
           </div>
         ) : (
           <>
-            {/* Featured Stories Grid */}
-            <section className="mb-6">
+            {/* Featured Stories - Hero + Row */}
+            <section className="mb-8">
+              <div className="section-header">
+                <h2 className="section-title">Featured</h2>
+              </div>
               <div className="featured-grid">
-                {featuredStories.map((story) => (
+                {featuredStories.map((story, index) => (
                   <FeaturedStoryCard
                     key={story._id}
                     story={story}
+                    size={index === 0 ? "large" : "medium"}
                     onClick={() => handleStoryClick(story)}
                   />
                 ))}
-                {/* Create Story Card */}
                 <CreateStoryCard onClick={handleCreateStory} />
               </div>
             </section>
@@ -182,7 +191,13 @@ export default function Home() {
 
             {/* More Stories Row */}
             {stories.length > 6 && (
-              <section className="mb-6">
+              <section className="mb-8">
+                <div className="section-header">
+                  <h2 className="section-title">More Stories</h2>
+                  <Link href="/discover" className="section-link">
+                    See All
+                  </Link>
+                </div>
                 <div className="horizontal-scroll">
                   {stories.slice(6).map((story) => (
                     <SmallStoryCard
@@ -201,106 +216,46 @@ export default function Home() {
   );
 }
 
-// Muted accent colors for glassmorphic cards
-const THEME_COLORS: Record<string, string> = {
-  adventure: "rgba(255, 107, 53, 0.35)",
-  animals: "rgba(86, 171, 47, 0.35)",
-  space: "rgba(102, 126, 234, 0.35)",
-  ocean: "rgba(0, 210, 255, 0.35)",
-  fairy: "rgba(240, 147, 251, 0.35)",
-  dinosaurs: "rgba(17, 153, 142, 0.35)",
-};
-
-// SVG patterns for each theme - centered and contained
-function ThemePattern({ theme, color }: { theme: string; color: string }) {
-  switch (theme) {
-    case "adventure":
-      return (
-        <svg viewBox="0 0 100 100" fill="none">
-          <path d="M20 75 L35 45 L50 65 L65 35 L80 75 Z" fill={color} />
-        </svg>
-      );
-    case "animals":
-      return (
-        <svg viewBox="0 0 100 100" fill="none">
-          <ellipse cx="50" cy="58" rx="14" ry="11" fill={color} />
-          <circle cx="35" cy="42" r="6" fill={color} />
-          <circle cx="50" cy="36" r="6" fill={color} />
-          <circle cx="65" cy="42" r="6" fill={color} />
-        </svg>
-      );
-    case "space":
-      return (
-        <svg viewBox="0 0 100 100" fill="none">
-          <ellipse cx="50" cy="50" rx="28" ry="10" stroke={color} strokeWidth="2" transform="rotate(-20 50 50)" />
-          <ellipse cx="50" cy="50" rx="22" ry="8" stroke={color} strokeWidth="2" transform="rotate(30 50 50)" />
-          <circle cx="50" cy="50" r="6" fill={color} />
-          <circle cx="30" cy="38" r="2" fill={color} />
-          <circle cx="70" cy="58" r="2" fill={color} />
-        </svg>
-      );
-    case "ocean":
-      return (
-        <svg viewBox="0 0 100 100" fill="none">
-          <path d="M15 45 Q35 35, 50 45 T85 45" stroke={color} strokeWidth="3" fill="none" />
-          <path d="M15 55 Q35 45, 50 55 T85 55" stroke={color} strokeWidth="2.5" fill="none" />
-          <path d="M15 65 Q35 55, 50 65 T85 65" stroke={color} strokeWidth="2" fill="none" />
-        </svg>
-      );
-    case "fairy":
-      return (
-        <svg viewBox="0 0 100 100" fill="none">
-          <path d="M50 25 L52 45 L50 50 L48 45 Z" fill={color} />
-          <path d="M50 75 L48 55 L50 50 L52 55 Z" fill={color} />
-          <path d="M25 50 L45 48 L50 50 L45 52 Z" fill={color} />
-          <path d="M75 50 L55 52 L50 50 L55 48 Z" fill={color} />
-          <circle cx="50" cy="50" r="4" fill={color} />
-          <circle cx="35" cy="35" r="2" fill={color} />
-          <circle cx="65" cy="65" r="2" fill={color} />
-        </svg>
-      );
-    case "dinosaurs":
-      return (
-        <svg viewBox="0 0 100 100" fill="none">
-          <path d="M50 75 L50 30" stroke={color} strokeWidth="3" />
-          <path d="M50 38 Q38 42, 34 50" stroke={color} strokeWidth="2" fill="none" />
-          <path d="M50 38 Q62 42, 66 50" stroke={color} strokeWidth="2" fill="none" />
-          <path d="M50 50 Q36 54, 30 62" stroke={color} strokeWidth="2" fill="none" />
-          <path d="M50 50 Q64 54, 70 62" stroke={color} strokeWidth="2" fill="none" />
-        </svg>
-      );
-    default:
-      return (
-        <svg viewBox="0 0 100 100" fill="none">
-          <circle cx="50" cy="50" r="20" stroke={color} strokeWidth="2" />
-        </svg>
-      );
-  }
-}
-
 // Featured Story Card Component
 function FeaturedStoryCard({
   story,
+  size = "medium",
   onClick,
 }: {
   story: StoryForPlayer;
+  size?: "medium" | "large";
   onClick: () => void;
 }) {
   const theme = story.theme || "adventure";
-  const color = THEME_COLORS[theme] || THEME_COLORS.adventure;
+  const Icon = THEME_ICONS[theme] || THEME_ICONS.adventure;
+  const iconSize = size === "large" ? 56 : 40;
 
   return (
     <button
       onClick={onClick}
-      className="story-card story-card-medium w-full text-left"
+      className={`story-card story-card-${size} w-full text-left`}
     >
-      <div className="story-card-image-container">
-        <div className="story-card-glass">
-          <div className="story-card-pattern">
-            <ThemePattern theme={theme} color={color} />
+      <div className={`story-card-image-container story-card-gradient-${theme}`}>
+        {story.coverImageUrl ? (
+          <img
+            src={story.coverImageUrl}
+            alt={story.childName}
+            className="story-card-image"
+            loading="lazy"
+          />
+        ) : (
+          <div className="story-card-glass">
+            <div className="story-card-pattern">
+              <Icon size={iconSize} strokeWidth={1.5} />
+            </div>
           </div>
-        </div>
+        )}
         <div className="story-card-overlay">
+          {size === "large" && (
+            <span className="text-[10px] font-semibold text-white/60 uppercase tracking-wider mb-1">
+              Featured
+            </span>
+          )}
           <h3 className="story-card-title">{story.childName}</h3>
           {story.interests && (
             <p className="story-card-subtitle">{story.interests.split(",")[0]}</p>
@@ -320,21 +275,30 @@ function SmallStoryCard({
   onClick: () => void;
 }) {
   const theme = story.theme || "adventure";
-  const color = THEME_COLORS[theme] || THEME_COLORS.adventure;
+  const Icon = THEME_ICONS[theme] || THEME_ICONS.adventure;
 
   return (
     <button
       onClick={onClick}
       className="story-card story-card-small text-left"
     >
-      <div className="story-card-image-container">
-        <div className="story-card-glass">
-          <div className="story-card-pattern">
-            <ThemePattern theme={theme} color={color} />
+      <div className={`story-card-image-container story-card-gradient-${theme}`}>
+        {story.coverImageUrl ? (
+          <img
+            src={story.coverImageUrl}
+            alt={story.childName}
+            className="story-card-image"
+            loading="lazy"
+          />
+        ) : (
+          <div className="story-card-glass">
+            <div className="story-card-pattern">
+              <Icon size={32} strokeWidth={1.5} />
+            </div>
           </div>
-        </div>
+        )}
         <div className="story-card-overlay">
-          <h3 className="story-card-title text-xs">{story.childName}</h3>
+          <h3 className="story-card-title">{story.childName}</h3>
         </div>
       </div>
     </button>
