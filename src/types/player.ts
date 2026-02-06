@@ -20,6 +20,7 @@ export interface StoryForPlayer {
 export interface Album {
   voiceId: string;
   ownerEmail: string | null;
+  profileImageUrl?: string;
   storyCount: number;
   latestStoryDate: string;
   // First 4 stories for album art grid
