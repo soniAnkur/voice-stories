@@ -165,6 +165,27 @@ export async function uploadImage(
 }
 
 /**
+ * Upload a user profile image to Cloudflare R2
+ */
+export async function uploadProfileImage(
+  buffer: Buffer,
+  email: string
+): Promise<string> {
+  // Create a safe filename from email
+  const sanitizedEmail = email
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "-")
+    .slice(0, 40);
+  const timestamp = Date.now();
+  const filename = `${sanitizedEmail}_${timestamp}.png`;
+
+  const key = `voice-stories/profiles/${filename}`;
+  console.log(`Uploading profile image: ${key}`);
+
+  return uploadToR2(buffer, key, "image/png");
+}
+
+/**
  * Delete a file from Cloudflare R2
  */
 export async function deleteFile(url: string): Promise<void> {

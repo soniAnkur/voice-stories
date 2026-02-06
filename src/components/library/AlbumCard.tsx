@@ -3,38 +3,42 @@
 import Link from "next/link";
 import type { Album } from "@/types/player";
 
-// Muted colors for glassmorphic album tiles
-const THEME_COLORS: Record<string, string> = {
-  adventure: "rgba(255, 107, 53, 0.3)",
-  animals: "rgba(86, 171, 47, 0.3)",
-  space: "rgba(102, 126, 234, 0.3)",
-  ocean: "rgba(0, 210, 255, 0.3)",
-  fairy: "rgba(240, 147, 251, 0.3)",
-  dinosaurs: "rgba(17, 153, 142, 0.3)",
-};
+// Gradient backgrounds for cards without profile images
+const FALLBACK_GRADIENTS = [
+  "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+  "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+  "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+  "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
+  "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
+  "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)",
+  "linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)",
+  "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+];
 
 interface AlbumCardProps {
   album: Album;
 }
 
 export function AlbumCard({ album }: AlbumCardProps) {
-  // Get cover data from stories for the 2x2 grid
-  const coverData = album.coverStories.map((story) => ({
-    theme: story.theme || "adventure",
-    coverImageUrl: story.coverImageUrl,
-  }));
+  // Get a consistent gradient based on email hash
+  const gradientIndex = album.ownerEmail
+    ? album.ownerEmail.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0) % FALLBACK_GRADIENTS.length
+    : 0;
+  const fallbackGradient = FALLBACK_GRADIENTS[gradientIndex];
 
-  // Fill to 4 items for the grid
-  while (coverData.length < 4) {
-    coverData.push(coverData[0] || { theme: "adventure", coverImageUrl: undefined });
-  }
-
-  // Truncate email for display
-  const displayEmail = album.ownerEmail
-    ? album.ownerEmail.length > 20
-      ? album.ownerEmail.substring(0, 17) + "..."
-      : album.ownerEmail
+  // Truncate email for display - show first part before @
+  const displayName = album.ownerEmail
+    ? album.ownerEmail.split("@")[0].length > 15
+      ? album.ownerEmail.split("@")[0].substring(0, 12) + "..."
+      : album.ownerEmail.split("@")[0]
     : "Unknown Voice";
+
+  // Get initials for fallback
+  const initials = displayName
+    .split(/[._-]/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() || "")
+    .join("");
 
   // Format date
   const formattedDate = new Date(album.latestStoryDate).toLocaleDateString(
@@ -47,47 +51,54 @@ export function AlbumCard({ album }: AlbumCardProps) {
 
   return (
     <Link href={`/album/${encodeURIComponent(album.voiceId)}`}>
-      <div className="glass-card p-4 hover:scale-[1.02] transition-transform cursor-pointer">
-        {/* 2x2 Album Art Grid - Glassmorphic */}
-        <div className="grid grid-cols-2 gap-1 rounded-xl overflow-hidden mb-3">
-          {coverData.slice(0, 4).map((item, index) => {
-            const color = THEME_COLORS[item.theme] || THEME_COLORS.adventure;
-            return (
-              <div
-                key={index}
-                className="aspect-square flex items-center justify-center overflow-hidden relative"
-                style={{
-                  background: `rgba(255, 255, 255, 0.05)`,
-                  backdropFilter: "blur(8px)",
-                }}
-              >
-                {/* Subtle color accent fallback */}
-                <div
-                  className="absolute inset-0"
-                  style={{ background: color }}
-                />
-                <img
-                  src={item.coverImageUrl || `/themes/${item.theme}.jpg`}
-                  alt={item.theme}
-                  className="w-full h-full object-cover relative z-10"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = "none";
-                  }}
-                />
-              </div>
-            );
-          })}
-        </div>
+      <div className="group relative overflow-hidden rounded-2xl transition-all duration-300 hover:scale-[1.03] hover:shadow-xl cursor-pointer">
+        {/* Background with profile image or gradient */}
+        <div
+          className="aspect-[4/5] relative"
+          style={{
+            background: album.profileImageUrl ? undefined : fallbackGradient,
+          }}
+        >
+          {/* Profile Image */}
+          {album.profileImageUrl && (
+            <img
+              src={album.profileImageUrl}
+              alt={displayName}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = "none";
+              }}
+            />
+          )}
 
-        {/* Album Info */}
-        <div>
-          <p className="font-semibold text-sm truncate">{displayEmail}</p>
-          <div className="flex items-center gap-2 text-xs text-secondary mt-1">
-            <span>
+          {/* Fallback initials when no profile image */}
+          {!album.profileImageUrl && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-5xl font-bold text-white/40">{initials || "?"}</span>
+            </div>
+          )}
+
+          {/* Animated glow ring on hover */}
+          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <div className="absolute inset-4 rounded-full border-2 border-white/20 animate-pulse" />
+          </div>
+
+          {/* Story count badge */}
+          <div className="absolute top-3 right-3 bg-black/50 backdrop-blur-sm px-2.5 py-1 rounded-full">
+            <span className="text-xs font-medium text-white">
               {album.storyCount} {album.storyCount === 1 ? "story" : "stories"}
             </span>
-            <span className="w-1 h-1 bg-gray-400 rounded-full" />
-            <span>{formattedDate}</span>
+          </div>
+
+          {/* Bottom gradient overlay */}
+          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+
+          {/* Info section at bottom */}
+          <div className="absolute inset-x-0 bottom-0 p-4">
+            <h3 className="font-semibold text-white text-base truncate mb-1">
+              {displayName}
+            </h3>
+            <p className="text-white/60 text-xs">{formattedDate}</p>
           </div>
         </div>
       </div>

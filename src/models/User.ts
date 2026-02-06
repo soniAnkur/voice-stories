@@ -6,6 +6,7 @@ export interface IUser extends Document {
   phone?: string;
   elevenlabsVoiceId?: string;
   stripeCustomerId?: string;
+  profileImageUrl?: string;
   createdAt: Date;
 }
 
@@ -26,6 +27,9 @@ const UserSchema = new Schema<IUser>(
       type: String,
     },
     stripeCustomerId: {
+      type: String,
+    },
+    profileImageUrl: {
       type: String,
     },
   },

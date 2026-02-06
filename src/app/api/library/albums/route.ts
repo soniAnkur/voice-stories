@@ -33,13 +33,14 @@ export async function GET() {
           preserveNullAndEmptyArrays: true,
         },
       },
-      // Compute effective voiceId
+      // Compute effective voiceId and include profile image
       {
         $addFields: {
           effectiveVoiceId: {
             $ifNull: ["$voiceId", "$user.elevenlabsVoiceId"],
           },
           ownerEmail: "$user.email",
+          profileImageUrl: "$user.profileImageUrl",
         },
       },
       // Filter out stories without an effective voiceId
@@ -57,6 +58,7 @@ export async function GET() {
         $group: {
           _id: "$effectiveVoiceId",
           ownerEmail: { $first: "$ownerEmail" },
+          profileImageUrl: { $first: "$profileImageUrl" },
           storyCount: { $sum: 1 },
           latestStoryDate: { $first: "$createdAt" },
           // Get first 4 stories for cover art
@@ -86,6 +88,7 @@ export async function GET() {
           _id: 0,
           voiceId: "$_id",
           ownerEmail: 1,
+          profileImageUrl: 1,
           storyCount: 1,
           latestStoryDate: 1,
           coverStories: 1,

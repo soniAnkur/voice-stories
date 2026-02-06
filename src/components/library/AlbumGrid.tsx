@@ -33,17 +33,13 @@ export function AlbumGrid() {
     return (
       <div className="album-grid">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="glass-card p-4 animate-pulse">
-            <div className="grid grid-cols-2 gap-1 rounded-xl overflow-hidden mb-3">
-              {[1, 2, 3, 4].map((j) => (
-                <div
-                  key={j}
-                  className="aspect-square bg-gray-200/50 rounded"
-                />
-              ))}
+          <div key={i} className="rounded-2xl overflow-hidden animate-pulse">
+            <div className="aspect-[4/5] bg-gradient-to-br from-gray-700/50 to-gray-800/50 relative">
+              <div className="absolute inset-x-0 bottom-0 p-4">
+                <div className="h-4 bg-gray-200/20 rounded w-3/4 mb-2" />
+                <div className="h-3 bg-gray-200/20 rounded w-1/2" />
+              </div>
             </div>
-            <div className="h-4 bg-gray-200/50 rounded w-3/4 mb-2" />
-            <div className="h-3 bg-gray-200/50 rounded w-1/2" />
           </div>
         ))}
       </div>
