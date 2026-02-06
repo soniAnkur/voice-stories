@@ -119,38 +119,33 @@ export function FullPlayer() {
           <div className="relative">
             {/* Outer glow ring */}
             <div
-              className={`absolute inset-0 rounded-full bg-gradient-to-r from-purple-500/30 via-pink-500/30 to-purple-500/30 blur-xl transition-opacity duration-500 ${
-                isPlaying ? 'opacity-100 animate-pulse' : 'opacity-50'
+              className={`absolute inset-0 rounded-full blur-2xl transition-opacity duration-500 ${
+                isPlaying ? 'opacity-80 animate-pulse' : 'opacity-40'
               }`}
-              style={{ transform: 'scale(1.1)' }}
+              style={{
+                transform: 'scale(1.15)',
+                background: 'radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%)'
+              }}
             />
 
-            {/* Vinyl disc effect - outer ring */}
-            <div className="relative w-72 h-72 rounded-full bg-gradient-to-br from-gray-800 to-gray-900 p-2 shadow-2xl">
-              {/* Vinyl grooves effect */}
-              <div className="absolute inset-4 rounded-full border border-white/5" />
-              <div className="absolute inset-8 rounded-full border border-white/5" />
-              <div className="absolute inset-12 rounded-full border border-white/5" />
-
-              {/* Album art container - rotates when playing */}
-              <div
-                className={`w-full h-full rounded-full overflow-hidden shadow-inner ${
-                  isPlaying ? 'animate-spin-slow' : ''
-                }`}
-                style={{
-                  animationPlayState: isPlaying ? 'running' : 'paused',
+            {/* Album art container - rotates when playing */}
+            <div
+              className={`relative w-72 h-72 rounded-full overflow-hidden shadow-2xl border-4 border-white/20 ${
+                isPlaying ? 'animate-spin-slow' : ''
+              }`}
+              style={{
+                animationPlayState: isPlaying ? 'running' : 'paused',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px rgba(255,255,255,0.1)'
+              }}
+            >
+              <img
+                src={coverImage}
+                alt={`${state.currentStory.childName}'s Story`}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = `/themes/${theme}.jpg`;
                 }}
-              >
-                <img
-                  src={coverImage}
-                  alt={`${state.currentStory.childName}'s Story`}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = `/themes/${theme}.jpg`;
-                  }}
-                />
-
-              </div>
+              />
             </div>
           </div>
         </div>
