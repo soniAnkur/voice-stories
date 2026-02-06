@@ -2,24 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { Mountain, PawPrint, Rocket, Waves, Sparkles, TreePine } from "lucide-react";
 import { HomeHeader } from "@/components/home/HomeHeader";
-import { PopularSection } from "@/components/home/PopularSection";
-import { CreateStoryCard } from "@/components/home/CreateStoryCard";
+import { HeroSection } from "@/components/home/HeroSection";
+import { FeaturedStoriesCarousel } from "@/components/home/FeaturedStoriesCarousel";
 import { usePlayer } from "@/components/player/PlayerProvider";
 import type { StoryForPlayer } from "@/types/player";
-import type { LucideIcon } from "lucide-react";
-
-// Lucide icon mapping for each story theme
-const THEME_ICONS: Record<string, LucideIcon> = {
-  adventure: Mountain,
-  animals: PawPrint,
-  space: Rocket,
-  ocean: Waves,
-  fairy: Sparkles,
-  dinosaurs: TreePine,
-};
 
 // Demo stories for showcasing the UI when no real stories exist
 const DEMO_STORIES: StoryForPlayer[] = [
@@ -147,10 +134,10 @@ export default function Home() {
     router.push("/create");
   };
 
-  // Featured stories (first 3 + create card)
-  const featuredStories = stories.slice(0, 3);
-  // Popular stories (rest)
-  const popularStories = stories.slice(3);
+  // Hero story (first one)
+  const heroStory = stories[0];
+  // Carousel stories (next 3)
+  const carouselStories = stories.slice(1, 4);
 
   return (
     <div className="page-container">
@@ -163,144 +150,20 @@ export default function Home() {
           </div>
         ) : (
           <>
-            {/* Featured Stories - Hero + Row */}
-            <section className="mb-8">
-              <div className="section-header">
-                <h2 className="section-title">Featured</h2>
-              </div>
-              <div className="featured-grid">
-                {featuredStories.map((story, index) => (
-                  <FeaturedStoryCard
-                    key={story._id}
-                    story={story}
-                    size={index === 0 ? "large" : "medium"}
-                    onClick={() => handleStoryClick(story)}
-                  />
-                ))}
-                <CreateStoryCard onClick={handleCreateStory} />
-              </div>
-            </section>
+            {/* Full-screen Hero Section */}
+            <HeroSection
+              featuredStory={heroStory}
+              onCreateStory={handleCreateStory}
+            />
 
-            {/* Popular Section */}
-            {popularStories.length > 0 && (
-              <PopularSection
-                stories={popularStories}
-                onStoryClick={handleStoryClick}
-              />
-            )}
-
-            {/* More Stories Row */}
-            {stories.length > 6 && (
-              <section className="mb-8">
-                <div className="section-header">
-                  <h2 className="section-title">More Stories</h2>
-                  <Link href="/discover" className="section-link">
-                    See All
-                  </Link>
-                </div>
-                <div className="horizontal-scroll">
-                  {stories.slice(6).map((story) => (
-                    <SmallStoryCard
-                      key={story._id}
-                      story={story}
-                      onClick={() => handleStoryClick(story)}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
+            {/* Recent Stories Carousel */}
+            <FeaturedStoriesCarousel
+              stories={carouselStories}
+              onStoryClick={handleStoryClick}
+            />
           </>
         )}
       </main>
     </div>
-  );
-}
-
-// Featured Story Card Component
-function FeaturedStoryCard({
-  story,
-  size = "medium",
-  onClick,
-}: {
-  story: StoryForPlayer;
-  size?: "medium" | "large";
-  onClick: () => void;
-}) {
-  const theme = story.theme || "adventure";
-  const Icon = THEME_ICONS[theme] || THEME_ICONS.adventure;
-  const iconSize = size === "large" ? 56 : 40;
-
-  return (
-    <button
-      onClick={onClick}
-      className={`story-card story-card-${size} w-full text-left`}
-    >
-      <div className={`story-card-image-container story-card-gradient-${theme}`}>
-        {story.coverImageUrl ? (
-          <img
-            src={story.coverImageUrl}
-            alt={story.childName}
-            className="story-card-image"
-            loading="lazy"
-          />
-        ) : (
-          <div className="story-card-glass">
-            <div className="story-card-pattern">
-              <Icon size={iconSize} strokeWidth={1.5} />
-            </div>
-          </div>
-        )}
-        <div className="story-card-overlay">
-          {size === "large" && (
-            <span className="text-[10px] font-semibold text-white/60 uppercase tracking-wider mb-1">
-              Featured
-            </span>
-          )}
-          <h3 className="story-card-title">{story.childName}</h3>
-          {story.interests && (
-            <p className="story-card-subtitle">{story.interests.split(",")[0]}</p>
-          )}
-        </div>
-      </div>
-    </button>
-  );
-}
-
-// Small Story Card for horizontal scroll
-function SmallStoryCard({
-  story,
-  onClick,
-}: {
-  story: StoryForPlayer;
-  onClick: () => void;
-}) {
-  const theme = story.theme || "adventure";
-  const Icon = THEME_ICONS[theme] || THEME_ICONS.adventure;
-
-  return (
-    <button
-      onClick={onClick}
-      className="story-card story-card-small text-left"
-    >
-      <div className={`story-card-image-container story-card-gradient-${theme}`}>
-        {story.coverImageUrl ? (
-          <img
-            src={story.coverImageUrl}
-            alt={story.childName}
-            className="story-card-image"
-            loading="lazy"
-          />
-        ) : (
-          <div className="story-card-glass">
-            <div className="story-card-pattern">
-              <Icon size={32} strokeWidth={1.5} />
-            </div>
-          </div>
-        )}
-        <div className="story-card-overlay">
-          <h3 className="story-card-title">{story.childName}</h3>
-        </div>
-      </div>
-    </button>
   );
 }
