@@ -53,13 +53,13 @@ export function FullPlayer() {
           alt=""
           className="absolute inset-0 w-full h-full object-cover"
           style={{
-            filter: 'blur(30px) saturate(1.5)',
-            transform: 'scale(1.2)',
-            opacity: 0.8
+            filter: 'blur(20px) saturate(1.8) brightness(1.1)',
+            transform: 'scale(1.3)',
+            opacity: 1
           }}
         />
         {/* Dark overlay for readability */}
-        <div className="absolute inset-0 bg-black/40" />
+        <div className="absolute inset-0 bg-black/25" />
       </div>
 
       {/* Content */}
