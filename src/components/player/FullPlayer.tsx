@@ -150,10 +150,6 @@ export function FullPlayer() {
                   }}
                 />
 
-                {/* Center hole effect */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-8 h-8 rounded-full bg-gray-900 border-2 border-gray-700 shadow-inner" />
-                </div>
               </div>
             </div>
           </div>
