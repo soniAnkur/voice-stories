@@ -46,15 +46,25 @@ export function FullPlayer() {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Blurred Album Art Background */}
+      {/* Solid base background */}
+      <div className="absolute inset-0 bg-black" />
+
+      {/* Blurred Album Art Background - stretched to fill */}
       <div className="absolute inset-0 overflow-hidden">
         <img
           src={coverImage}
           alt=""
-          className="absolute inset-0 w-full h-full object-cover scale-110 blur-3xl opacity-60"
+          className="absolute w-full h-full object-cover scale-125 blur-2xl opacity-70"
+          style={{
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%) scale(1.3)',
+            minWidth: '100%',
+            minHeight: '100%'
+          }}
         />
         {/* Dark overlay for readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/60 to-black/80" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/50 to-black/70" />
       </div>
 
       {/* Content */}
