@@ -9,6 +9,313 @@ interface StoryGenerationResult {
   backgroundMusicPrompt: string;
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// STORY VARIETY SYSTEM - Makes each story unique and engaging
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Story archetypes - different narrative patterns to keep stories fresh
+ */
+const STORY_ARCHETYPES = [
+  {
+    name: "The Helper",
+    description: "A creature or character needs help, and the child's kindness saves the day",
+    hook: "meets someone in need",
+    journey: "helping and problem-solving together",
+    climax: "the child's kindness creates a magical reward"
+  },
+  {
+    name: "The Discovery",
+    description: "The child discovers a hidden world or secret place",
+    hook: "finds a hidden entrance or magical doorway",
+    journey: "exploring wonders and meeting inhabitants",
+    climax: "becomes a special friend/guardian of the secret place"
+  },
+  {
+    name: "The Mystery",
+    description: "Something magical is happening and the child follows clues to understand it",
+    hook: "notices something strange or magical happening",
+    journey: "following clues and gathering pieces of the puzzle",
+    climax: "solves the mystery and discovers something wonderful"
+  },
+  {
+    name: "The Gift",
+    description: "The child receives or finds something magical with a special purpose",
+    hook: "receives or discovers a magical object",
+    journey: "learning what the gift can do and how to use it",
+    climax: "uses the gift to help others or create something beautiful"
+  },
+  {
+    name: "The Festival",
+    description: "The child is invited to or stumbles upon a magical celebration",
+    hook: "discovers a magical celebration is happening",
+    journey: "participating in magical activities and games",
+    climax: "plays a special role in the celebration's highlight"
+  },
+  {
+    name: "The Journey Home",
+    description: "The child helps someone find their way back home",
+    hook: "meets a lost creature or character",
+    journey: "traveling through magical places together",
+    climax: "reunites the friend with their family/home"
+  },
+  {
+    name: "The Competition",
+    description: "The child enters a friendly magical contest or challenge",
+    hook: "is invited to participate in something special",
+    journey: "preparing and competing with fun challenges",
+    climax: "wins through creativity, kindness, or teamwork (not just being 'best')"
+  },
+  {
+    name: "The Transformation",
+    description: "The child temporarily becomes something else or gains special abilities",
+    hook: "is magically transformed or gains powers",
+    journey: "experiencing the world in a new way",
+    climax: "uses new perspective to do something wonderful before returning to normal"
+  }
+];
+
+/**
+ * Theme-specific story elements for deep integration
+ */
+const THEME_ELEMENTS: Record<string, {
+  settings: string[];
+  characters: string[];
+  objects: string[];
+  challenges: string[];
+  atmosphere: string;
+}> = {
+  adventure: {
+    settings: [
+      "a treehouse village high in ancient trees",
+      "a cozy cave system with glowing crystals",
+      "a meadow where flowers sing",
+      "an old lighthouse that shows the way to anywhere",
+      "a bridge made of rainbows connecting floating islands",
+      "a friendly giant's garden with enormous vegetables"
+    ],
+    characters: [
+      "a wise old owl who collects stories",
+      "a tiny dragon who makes the best hot cocoa",
+      "a cloud that gives fluffy rides",
+      "a family of musical mice",
+      "a friendly scarecrow who loves dancing",
+      "a grandmother hedgehog who knows all the secret paths"
+    ],
+    objects: [
+      "a compass that points to what you need most",
+      "boots that leave flowers where you step",
+      "a lantern that shows hidden doors",
+      "a backpack that always has exactly what you need",
+      "a whistle that calls friendly animals"
+    ],
+    challenges: [
+      "crossing a ticklish bridge that giggles",
+      "finding the right path through a maze of mirrors",
+      "waking a sleepy guardian gently",
+      "solving a riddle from a talking tree",
+      "building something creative from found materials"
+    ],
+    atmosphere: "wonder-filled and empowering"
+  },
+  animals: {
+    settings: [
+      "a cozy burrow with underground tunnels",
+      "a forest clearing where animals hold meetings",
+      "a pond where fish and frogs share stories",
+      "a barn where animals have secret adventures at night",
+      "a meadow where butterflies carry messages",
+      "a treehouse built by cooperative forest creatures"
+    ],
+    characters: [
+      "a brave little mouse with big dreams",
+      "a wise turtle who has seen many seasons",
+      "a cheerful bluebird who delivers good news",
+      "a shy deer learning to make friends",
+      "a playful otter family",
+      "a mother fox teaching her cubs",
+      "a grumpy-but-kind badger"
+    ],
+    objects: [
+      "a feather that lets you understand animal speech",
+      "a nut that grants one wish",
+      "a hollow log that's bigger inside",
+      "honey that makes you brave",
+      "a leaf map showing secret animal paths"
+    ],
+    challenges: [
+      "helping gather food before winter",
+      "organizing a surprise party for someone",
+      "finding the perfect home for a new friend",
+      "learning the special talent of a new species",
+      "resolving a misunderstanding between friends"
+    ],
+    atmosphere: "warm, fuzzy, and full of friendship"
+  },
+  space: {
+    settings: [
+      "a cozy spaceship shaped like a teacup",
+      "a planet made entirely of clouds and rainbows",
+      "a friendly space station where aliens share snacks",
+      "a moon with bouncy ground",
+      "a garden that floats among the stars",
+      "a comet that gives rides across the galaxy"
+    ],
+    characters: [
+      "a small robot learning about feelings",
+      "a purple alien who collects Earth things",
+      "a star who wants to play",
+      "a moon who feels lonely",
+      "a family of space whales",
+      "a friendly AI who tells jokes",
+      "astronaut grandparents"
+    ],
+    objects: [
+      "a telescope that shows wishes",
+      "a space suit that changes colors with mood",
+      "stardust that makes things float",
+      "a translator that works for any language",
+      "gravity boots for walking on anything"
+    ],
+    challenges: [
+      "helping a lost star find its constellation",
+      "delivering a birthday present across the galaxy",
+      "teaching an alien about Earth customs",
+      "collecting colors for a rainbow planet",
+      "finding the music of the spheres"
+    ],
+    atmosphere: "cosmic wonder with cozy warmth"
+  },
+  ocean: {
+    settings: [
+      "a coral castle where fish are the royalty",
+      "a submarine shaped like a friendly whale",
+      "an underwater garden tended by seahorses",
+      "a kelp forest full of hiding spots",
+      "a shipwreck turned into a cozy home",
+      "a pearl palace with rainbow walls"
+    ],
+    characters: [
+      "a wise octopus who gives hugs",
+      "a seahorse postal carrier",
+      "a grumpy crab with a soft heart",
+      "a whale who sings lullabies",
+      "a school of fish who think as one",
+      "a friendly shark who's vegetarian",
+      "a jellyfish who glows with feelings"
+    ],
+    objects: [
+      "a shell that lets you breathe underwater",
+      "a pearl that lights the darkest depths",
+      "seaweed that makes you swim fast",
+      "a message in a bottle that finds who needs it",
+      "sand dollars that grant small wishes"
+    ],
+    challenges: [
+      "finding a lost treasure that's actually friendship",
+      "helping clean up the ocean together",
+      "reuniting a baby with its family",
+      "creating an underwater concert",
+      "discovering what makes each creature special"
+    ],
+    atmosphere: "flowing, peaceful, and deeply connected"
+  },
+  fairy: {
+    settings: [
+      "a mushroom village with tiny doors",
+      "a flower that's actually a fairy apartment",
+      "a dewdrop kingdom at dawn",
+      "a magical garden that rearranges at night",
+      "a pixie dust factory in an old oak",
+      "a fairy market under the full moon"
+    ],
+    characters: [
+      "a fairy godmother in training",
+      "a grumpy gnome who secretly helps",
+      "a tooth fairy on their first collection",
+      "a garden sprite who loves mischief",
+      "a wise fairy queen who speaks in rhymes",
+      "a bumbling wizard's apprentice",
+      "talking flowers with personalities"
+    ],
+    objects: [
+      "a wand that only works with kind words",
+      "wings that appear when you're brave",
+      "a thimble full of dreams",
+      "shoes that dance on their own",
+      "a mirror that shows your best self"
+    ],
+    challenges: [
+      "earning your wings through kindness",
+      "brewing a potion with unusual ingredients",
+      "granting a wish in an unexpected way",
+      "breaking a silly spell with laughter",
+      "planning a fairy ball with limited magic"
+    ],
+    atmosphere: "whimsical, sparkly, and full of gentle magic"
+  },
+  dinosaurs: {
+    settings: [
+      "a valley where dinosaurs still live peacefully",
+      "a time-traveling treehouse",
+      "a dinosaur school for young ones",
+      "a nest high on a cliff with amazing views",
+      "a river where herbivores and carnivores share water kindly",
+      "a volcano that's actually warm and cozy inside"
+    ],
+    characters: [
+      "a baby t-rex who's afraid of his own shadow",
+      "a long-necked dinosaur who tells stories from high up",
+      "a triceratops who protects smaller friends",
+      "a pterodactyl mail carrier",
+      "a stegosaurus who loves music",
+      "a raptor family who values cleverness",
+      "an old dinosaur who remembers everything"
+    ],
+    objects: [
+      "a dinosaur egg about to hatch",
+      "ancient amber that shows the past",
+      "a feather that survived millions of years",
+      "footprint fossils that tell stories",
+      "a bone that grants dinosaur strength"
+    ],
+    challenges: [
+      "helping a dinosaur find its herd",
+      "protecting eggs from a gentle, accidental threat",
+      "discovering what a dinosaur really ate",
+      "making friends across species",
+      "preparing for the changing seasons"
+    ],
+    atmosphere: "prehistoric wonder with gentle giants"
+  }
+};
+
+/**
+ * Opening hooks that vary the story beginning
+ */
+const OPENING_VARIATIONS = [
+  "It all began when the last ray of sunlight touched",
+  "Nobody knew that tonight would be different, until",
+  "The sound was so soft, almost like a whisper, when",
+  "Just as dreams began to form in the evening air,",
+  "Some say magic happens when you least expect it, and that's exactly when",
+  "The stars had just begun their nightly dance when",
+  "In that quiet moment between waking and sleeping,",
+  "What started as an ordinary evening became extraordinary when"
+];
+
+/**
+ * Pick random elements from arrays
+ */
+function pickRandom<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function pickMultiple<T>(arr: T[], count: number): T[] {
+  const shuffled = [...arr].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, count);
+}
+
 /**
  * Mock story for testing when Gemini quota is exhausted
  * Uses ElevenLabs v3 audio tags for expressive narration
@@ -49,86 +356,80 @@ function getMockFullStory(childName: string, age: number, interests: string): St
   };
 }
 
-const SYSTEM_PROMPT = `You are a master children's storyteller who creates engaging, magical bedtime stories. Your stories captivate children with real adventures while being warm and comforting.
+const SYSTEM_PROMPT = `You are a master children's storyteller creating UNIQUE, engaging bedtime stories. Each story you create must feel fresh and different - avoid formulaic patterns.
 
 ═══════════════════════════════════════
-MANDATORY STORY STRUCTURE (Follow this exactly!)
+CREATIVITY IS YOUR TOP PRIORITY
 ═══════════════════════════════════════
 
-Every story MUST follow this narrative arc:
-
-1. HOOK (5% of story)
-   - Start with something intriguing that immediately captures attention
-   - A mysterious sound, a glowing object, an unexpected visitor
-   - Make the child want to know what happens next
-
-2. SETUP (15% of story)
-   - Introduce the magical world and setting
-   - Present a clear QUEST or CHALLENGE for the child character
-   - Examples: find a lost star, help a baby dragon, solve a riddle, rescue a friend
-
-3. ADVENTURE (50% of story) - THIS IS THE HEART OF THE STORY
-   - The main journey with REAL events happening
-   - Include 3-4 interesting scenes/challenges
-   - Meet helpful friends or magical creatures along the way
-   - Build gentle tension and excitement
-   - Include moments of wonder and discovery
-   - The child character should be brave, kind, and resourceful
-
-4. CLIMAX (15% of story)
-   - The exciting moment where the challenge is faced
-   - The child character uses what they learned to succeed
-   - A satisfying "aha!" or triumph moment
-
-5. RESOLUTION (10% of story)
-   - The quest is complete, the problem is solved
-   - Show what was learned or gained
-   - Celebrate the accomplishment
-
-6. WIND-DOWN (5% of story)
-   - Brief peaceful transition
-   - Feeling safe, happy, and content
-   - Ready to rest after a great adventure
+Every story must be GENUINELY DIFFERENT:
+- Never use the same plot structure twice
+- Surprise yourself with unexpected directions
+- Let the specific story archetype guide you naturally
+- Create memorable, named characters with distinct personalities
+- Use the child's interests in creative, unexpected ways
 
 ═══════════════════════════════════════
-ENGAGEMENT REQUIREMENTS
+STORYTELLING TECHNIQUES
 ═══════════════════════════════════════
-- Every story needs a CLEAR GOAL the child is trying to achieve
-- Include REAL OBSTACLES (gentle, not scary) that must be overcome
-- Create MEMORABLE CHARACTERS the child meets along the way
-- Build to an EXCITING MOMENT before the resolution
-- Make the child character the HERO who saves the day
+
+MIX AND VARY these elements:
+- Story openings: start mid-action, with dialogue, with mystery, with wonder
+- Pacing: vary between quiet moments and exciting ones
+- Character introductions: some friendly, some initially shy, some surprising
+- Challenges: puzzles, creative tasks, cooperation, gentle bravery
+- Endings: triumphant, peaceful, hopeful, connected
+
+AVOID predictable patterns like:
+- "Once upon a time" openings (find more creative starts)
+- Linear A→B→C quests (add surprises, twists, discoveries)
+- Characters who just "help the child" (give them their own motivations)
+- Everything working perfectly (include small mishaps that lead to better outcomes)
 
 ═══════════════════════════════════════
-AUDIO TAGS (Use sparingly for effect)
+EMOTIONAL DEPTH
 ═══════════════════════════════════════
-Use ElevenLabs tags in [brackets] for key moments:
-- [softly] - gentle narration
-- [excited] - exciting discoveries
-- [whispers] - secrets and mysteries
-- [warmly] - comforting moments
-- [pause] - between paragraphs
-- [long pause] - at scene changes
-- [peacefully] - for the wind-down ending
+
+Great stories have emotional variety:
+- Moments of wonder and amazement
+- Gentle humor and playfulness
+- Warmth and connection with characters
+- Small accomplishments that feel big
+- The satisfaction of figuring things out
+- The joy of making unexpected friends
+
+═══════════════════════════════════════
+AUDIO TAGS (Use naturally)
+═══════════════════════════════════════
+[softly] - gentle, intimate moments
+[excited] - discoveries and excitement
+[whispers] - secrets and mystery
+[warmly] - loving, kind moments
+[pause] - natural breathing room
+[long pause] - scene transitions
+[peacefully] - calming endings
+[playfully] - fun, silly moments
+[curiously] - wondering and exploring
 
 ═══════════════════════════════════════
 AGE-APPROPRIATE VOCABULARY
 ═══════════════════════════════════════
-Ages 2-3: Basic words only. Very short sentences (3-5 words). Simple quest (find teddy, follow butterfly).
-Ages 4-5: Simple words. Short sentences (5-8 words). Clear quest with 2-3 events.
-Ages 6-7: Richer vocabulary. Longer sentences OK. More complex quest with 3-4 events.
-Ages 8-10: Full vocabulary. Complex narrative with multiple plot threads.
+Ages 2-3: Simple words, very short sentences. Repetition is comforting.
+Ages 4-5: Playful words, short sentences. Silly sounds and actions.
+Ages 6-7: Richer vocabulary. More complex emotions and relationships.
+Ages 8-10: Sophisticated narrative. Subplots and character development.
 
 ═══════════════════════════════════════
 WHAT TO AVOID
 ═══════════════════════════════════════
-- NO scary monsters or villains
-- NO real danger or violence
+- NO scary content or real danger
+- NO villains or antagonists
 - NO sad or distressing content
-- NO leaving the quest unresolved
-- NO boring, event-less stories - something must HAPPEN
+- NO unresolved stories
+- NO boring, repetitive patterns
+- NO generic placeholder characters (give everyone names and personality!)
 
-Your stories should make children feel like brave adventurers who can do amazing things!`;
+Your stories should feel like a gift - unique, personal, and magical.`;
 
 /**
  * Generate a 30-second preview story (~80 words)
@@ -145,44 +446,58 @@ export async function generatePreviewStory(
     return getMockPreviewStory(childName);
   }
 
+  // Select random elements for this unique story
+  const archetype = pickRandom(STORY_ARCHETYPES);
+  const themeData = THEME_ELEMENTS[theme] || THEME_ELEMENTS.adventure;
+  const setting = pickRandom(themeData.settings);
+  const character = pickRandom(themeData.characters);
+  const opening = pickRandom(OPENING_VARIATIONS);
+
   const customPromptSection = customPrompt
-    ? `\nCustom story instructions from the user: ${customPrompt}\n`
+    ? `\nSpecial request: ${customPrompt}\n`
     : '';
 
-  const userPrompt = `Create a compelling 30-second story PREVIEW (approximately 100 words) for a ${childAge}-year-old child named ${childName}.
+  const userPrompt = `Create a captivating 30-second story PREVIEW (approximately 100 words) for ${childName}, age ${childAge}.
 
-Child's interests: ${interests}
-Story theme: ${theme}
+═══════════════════════════════════════
+THIS STORY'S UNIQUE ELEMENTS
+═══════════════════════════════════════
+Story archetype: "${archetype.name}" - ${archetype.description}
+- The hook: ${childName} ${archetype.hook}
+- The journey will be about: ${archetype.journey}
+
+Theme: ${theme} (${themeData.atmosphere})
+Setting to feature: ${setting}
+Character to introduce: ${character}
+Opening style: "${opening}..."
+
+Child's interests to weave in creatively: ${interests}
 ${customPromptSection}
 
-This is a TEASER that must:
-1. Start with an attention-grabbing HOOK - something magical or mysterious happens
-2. Introduce ${childName} discovering something exciting
-3. Hint at an adventure about to begin
-4. End on a CLIFFHANGER that makes them want to hear the full story!
+═══════════════════════════════════════
+PREVIEW REQUIREMENTS
+═══════════════════════════════════════
+This preview must:
+1. Open with the given opening style - make it INTRIGUING
+2. Introduce ${childName} in or approaching the setting
+3. Create a moment of discovery or connection related to the archetype
+4. End on a COMPELLING CLIFFHANGER that promises adventure
 
-Example structure:
-- Hook: Something magical appears or happens
-- Discovery: ${childName} finds/sees something amazing
-- Cliffhanger: "What would happen next? What was this magical [thing]?"
+Make it feel UNIQUE - not a generic "child finds magic thing" story!
 
-Age-appropriate vocabulary for ${childAge}-year-old:
-${childAge <= 3 ? "Simple toddler words. Very short sentences." : ""}
-${childAge >= 4 && childAge <= 5 ? "Preschool words: fluffy, sparkly, giggle, twinkle. Short sentences." : ""}
-${childAge >= 6 && childAge <= 7 ? "Richer vocabulary OK: magical, wonderful, discovered." : ""}
-${childAge >= 8 ? "Full vocabulary for exciting storytelling." : ""}
+Age ${childAge} vocabulary:
+${childAge <= 3 ? "Simple toddler words. Very short sentences. Gentle repetition." : ""}
+${childAge >= 4 && childAge <= 5 ? "Playful words: fluffy, sparkly, giggle, whoosh. Short sentences with rhythm." : ""}
+${childAge >= 6 && childAge <= 7 ? "Richer vocabulary. Build atmosphere. Show don't tell." : ""}
+${childAge >= 8 ? "Sophisticated language. Create intrigue and depth." : ""}
 
-Audio tags to use:
-- [softly] at the start
-- [excited] for the discovery
-- [whispers] for mystery
-- [pause] between sentences
+Audio tags: [softly], [excited], [whispers], [curiously], [pause]
 
-Respond in JSON format only:
+Respond in JSON only:
 {
-  "title": "An intriguing, exciting title",
-  "story": "[softly] The 100-word preview ending with anticipation...",
-  "backgroundMusicPrompt": "5-word prompt for magical adventure music"
+  "title": "A unique, intriguing title specific to THIS story",
+  "story": "The ~100 word preview with audio tags...",
+  "backgroundMusicPrompt": "5 words describing the mood"
 }`;
 
   return callGemini(userPrompt);
@@ -203,88 +518,129 @@ export async function generateFullStory(
     return getMockFullStory(childName, childAge, interests);
   }
 
+  // Select random elements for this unique story
+  const archetype = pickRandom(STORY_ARCHETYPES);
+  const themeData = THEME_ELEMENTS[theme] || THEME_ELEMENTS.adventure;
+  const settings = pickMultiple(themeData.settings, 3);
+  const characters = pickMultiple(themeData.characters, 3);
+  const objects = pickMultiple(themeData.objects, 2);
+  const challenges = pickMultiple(themeData.challenges, 2);
+  const opening = pickRandom(OPENING_VARIATIONS);
+
   const customPromptSection = customPrompt
-    ? `\nCustom story instructions from the user: ${customPrompt}\n`
+    ? `\nSpecial request from the creator: ${customPrompt}\n`
     : '';
 
-  const userPrompt = `Create an engaging 10-minute bedtime adventure story for a ${childAge}-year-old child named ${childName}.
+  const userPrompt = `Create a UNIQUE, engaging 10-minute bedtime story for ${childName}, age ${childAge}.
 
-WORD COUNT: You MUST write between 1400-1600 words. This is NON-NEGOTIABLE. Count your words!
+WORD COUNT: 1400-1600 words. NON-NEGOTIABLE!
 
-Child's interests: ${interests}
-Story theme: ${theme}
+═══════════════════════════════════════
+THIS STORY'S UNIQUE DNA
+═══════════════════════════════════════
+
+STORY ARCHETYPE: "${archetype.name}"
+${archetype.description}
+- Hook concept: ${childName} ${archetype.hook}
+- Journey theme: ${archetype.journey}
+- Climax moment: ${archetype.climax}
+
+THEME: ${theme}
+Atmosphere: ${themeData.atmosphere}
+
+SETTINGS TO VISIT (use at least 2):
+1. ${settings[0]}
+2. ${settings[1]}
+3. ${settings[2]}
+
+CHARACTERS TO MEET (use at least 2, give them NAMES):
+1. ${characters[0]}
+2. ${characters[1]}
+3. ${characters[2]}
+
+MAGICAL OBJECTS (weave in at least 1):
+- ${objects[0]}
+- ${objects[1]}
+
+CHALLENGES TO FACE (include at least 1):
+- ${challenges[0]}
+- ${challenges[1]}
+
+OPENING STYLE: "${opening}..."
+
+CHILD'S INTERESTS (weave these in creatively): ${interests}
 ${customPromptSection}
 
 ═══════════════════════════════════════
-MANDATORY STORY STRUCTURE (Follow exactly!)
+STORY STRUCTURE (Flexible, not rigid!)
 ═══════════════════════════════════════
 
-1. HOOK (first ~75 words)
-   Begin with something magical or mysterious that grabs attention immediately.
-   Example starts: A glowing light appears, a tiny creature needs help, a magical map is found.
+The archetype guides your structure:
 
-2. SETUP (next ~225 words)
-   - Establish the magical world/setting vividly
-   - Give ${childName} a clear QUEST: something to find, someone to help, a problem to solve
-   - Make the stakes clear - why does this matter?
+"${archetype.name}" story flow:
+1. OPENING (~100 words): Use the opening style. ${childName} ${archetype.hook}.
+2. DISCOVERY (~200 words): The first setting reveals itself. Meet the first character.
+3. JOURNEY (~800 words): ${archetype.journey}. Visit multiple settings. Meet more characters. Face challenges. Include moments of humor, wonder, and connection.
+4. CLIMAX (~200 words): ${archetype.climax}. Make it satisfying!
+5. WARM CLOSE (~200 words): Celebrate, say goodbyes, settle into peaceful rest.
 
-3. ADVENTURE (next ~700 words) - THE HEART OF YOUR STORY
-   This section must include:
-   - At least 3 different scenes or locations
-   - At least 2 friendly characters ${childName} meets and interacts with
-   - At least 2 challenges or puzzles to overcome
-   - Moments of wonder, discovery, and gentle excitement
-   - ${childName} being brave, clever, and kind
-
-4. CLIMAX (next ~225 words)
-   - The exciting peak where ${childName} faces the main challenge
-   - ${childName} uses skills/friends gained during the adventure to succeed
-   - A triumphant, satisfying moment of victory
-
-5. RESOLUTION (next ~150 words)
-   - Show what ${childName} accomplished and learned
-   - Celebrate with the friends made along the way
-   - Begin the journey home feeling proud and happy
-
-6. WIND-DOWN (final ~75 words)
-   - Brief peaceful transition
-   - Safe, warm, content feelings
-   - Ready to rest after a wonderful adventure
+DON'T follow this rigidly - let the story breathe and surprise you!
 
 ═══════════════════════════════════════
-AGE-APPROPRIATE VOCABULARY (Age ${childAge})
+MAKE IT UNIQUE
 ═══════════════════════════════════════
-${childAge <= 3 ? "Use simple toddler words. Very short sentences (3-5 words). Simple quest like finding a lost toy." : ""}
-${childAge >= 4 && childAge <= 5 ? "Use preschool-friendly words: fluffy, sparkly, giggle, tiptoe, twinkle. Sentences 5-8 words. Clear, simple quest." : ""}
-${childAge >= 6 && childAge <= 7 ? "Richer vocabulary OK: magical, wonderful, discovered. Longer sentences. More complex quest with multiple steps." : ""}
-${childAge >= 8 ? "Full vocabulary. Complex narrative with subplots. Sophisticated quest with meaningful challenges." : ""}
+
+AVOID these clichés:
+- "Once upon a time" (use the given opening instead)
+- Generic "magical door appears" openings
+- Characters who only exist to help the child
+- Predictable "collect 3 things" quests
+- Endings where everyone just says "goodbye, you're special"
+
+INCLUDE these for richness:
+- Give every character a NAME and quirk
+- Small moments of humor or silliness
+- Unexpected twists (a helper needs help, a challenge solves itself wrong at first)
+- Sensory details (sounds, textures, colors, smells)
+- The child's interests appearing in surprising ways
+- Quiet moments between exciting ones
 
 ═══════════════════════════════════════
-AUDIO TAGS (Use sparingly at key moments)
+AGE ${childAge} VOCABULARY
 ═══════════════════════════════════════
-- [softly] - for gentle narration
-- [excited] - for discoveries and exciting moments
-- [whispers] - for secrets and mysteries
-- [warmly] - for kind, loving moments
-- [pause] - between paragraphs
-- [long pause] - at scene transitions
-- [peacefully] - for the wind-down ending
+${childAge <= 3 ? "Simple words. Very short sentences. Comforting repetition. Focus on sensory details." : ""}
+${childAge >= 4 && childAge <= 5 ? "Playful words with fun sounds. Short sentences with rhythm. Silly moments and sound effects." : ""}
+${childAge >= 6 && childAge <= 7 ? "Richer vocabulary. Show emotions, not just actions. Characters can have complex feelings." : ""}
+${childAge >= 8 ? "Sophisticated narrative. Subtle humor. Characters with depth and motivation. Meaningful themes." : ""}
 
 ═══════════════════════════════════════
-IMPORTANT REMINDERS
+AUDIO TAGS (Use naturally, not formulaically)
 ═══════════════════════════════════════
-- ${childName} is the HERO - brave, kind, clever
-- Include REAL events and challenges (not just wandering around)
-- Create memorable characters with names and personalities
-- Build genuine excitement before the climax
-- NO scary content, but gentle tension is good
-- Word count MUST be 1400-1600 words!
+[softly] - intimate moments
+[excited] - discoveries
+[whispers] - secrets
+[warmly] - connection
+[playfully] - fun moments
+[curiously] - wondering
+[pause] - breathing room
+[long pause] - scene changes
+[peacefully] - winding down
 
-Respond in this exact JSON format only:
+═══════════════════════════════════════
+ABSOLUTE REQUIREMENTS
+═══════════════════════════════════════
+✓ 1400-1600 words (COUNT THEM!)
+✓ ${childName} is brave, kind, and clever
+✓ Named characters with personalities
+✓ No scary content (gentle tension is fine)
+✓ Satisfying resolution
+✓ Peaceful ending for sleep
+
+Respond in JSON only:
 {
-  "title": "An exciting, descriptive title",
-  "story": "[softly] The complete 1400-1600 word story...",
-  "backgroundMusicPrompt": "5-word prompt for magical adventure music"
+  "title": "A unique title that captures THIS specific story",
+  "story": "The complete 1400-1600 word story with audio tags...",
+  "backgroundMusicPrompt": "5 words for the mood"
 }`;
 
   return callGemini(userPrompt);
@@ -311,8 +667,9 @@ async function callGemini(userPrompt: string): Promise<StoryGenerationResult> {
         },
       ],
       generationConfig: {
-        temperature: 0.85,
+        temperature: 0.95, // Higher for more creative, varied stories
         maxOutputTokens: 4000,
+        topP: 0.95, // Allow more diverse token selection
       },
     }),
   });
