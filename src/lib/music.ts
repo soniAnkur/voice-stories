@@ -1,8 +1,8 @@
 /**
- * Music selection and generation for story backgrounds
+ * Music selection for story backgrounds
  *
  * Strategy: Map story themes/moods to curated royalty-free tracks
- * Alternative: Integrate with Mubert API for AI-generated music
+ * All tracks are CC0 licensed (public domain) - free for commercial use
  */
 
 export interface MusicTrack {
@@ -198,111 +198,15 @@ export function getAllMusicTracks(): MusicTrack[] {
   return MUSIC_LIBRARY;
 }
 
-// ============================================
-// MUBERT API INTEGRATION (Optional - for AI-generated music)
-// ============================================
-
-const MUBERT_API_KEY = process.env.MUBERT_API_KEY;
-const MUBERT_BASE_URL = "https://api-b2b.mubert.com/v2";
-
-interface MubertGenerateParams {
-  prompt: string;
-  duration: number; // seconds
-  intensity?: "low" | "medium" | "high";
-}
-
 /**
- * Generate custom background music using Mubert AI
- * Requires MUBERT_API_KEY environment variable
- */
-export async function generateMusicWithMubert(
-  params: MubertGenerateParams
-): Promise<string | null> {
-  if (!MUBERT_API_KEY) {
-    console.warn("MUBERT_API_KEY not set, falling back to curated tracks");
-    return null;
-  }
-
-  try {
-    // Get Mubert PAT token
-    const patResponse = await fetch(`${MUBERT_BASE_URL}/GetServiceAccess`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        method: "GetServiceAccess",
-        params: {
-          email: "api@voicebedtimetales.com",
-          license: MUBERT_API_KEY,
-          token: MUBERT_API_KEY,
-          mode: "loop",
-        },
-      }),
-    });
-
-    const patData = await patResponse.json();
-    const pat = patData?.data?.pat;
-
-    if (!pat) {
-      console.error("Failed to get Mubert PAT token");
-      return null;
-    }
-
-    // Generate music
-    const generateResponse = await fetch(`${MUBERT_BASE_URL}/RecordTrackTTM`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        method: "RecordTrackTTM",
-        params: {
-          pat,
-          prompt: `${params.prompt} calm bedtime lullaby`,
-          duration: params.duration,
-          format: "mp3",
-          intensity: params.intensity || "low",
-          mode: "track",
-        },
-      }),
-    });
-
-    const generateData = await generateResponse.json();
-
-    if (generateData?.data?.tasks?.[0]?.download_link) {
-      return generateData.data.tasks[0].download_link;
-    }
-
-    return null;
-  } catch (error) {
-    console.error("Mubert generation failed:", error);
-    return null;
-  }
-}
-
-/**
- * Get background music URL - tries Mubert first, falls back to curated tracks
+ * Get background music URL from curated library
+ * Selects best matching track based on theme and music prompt
  */
 export async function getBackgroundMusic(
   theme: string,
   backgroundMusicPrompt?: string,
-  duration: number = 300
-): Promise<{ url: string; source: "mubert" | "library" }> {
-  // Try Mubert if API key is available
-  if (MUBERT_API_KEY && backgroundMusicPrompt) {
-    const mubertUrl = await generateMusicWithMubert({
-      prompt: backgroundMusicPrompt,
-      duration,
-      intensity: "low",
-    });
-
-    if (mubertUrl) {
-      return { url: mubertUrl, source: "mubert" };
-    }
-  }
-
-  // Fall back to curated library
+  _duration: number = 300
+): Promise<{ url: string; source: "library" }> {
   const track = selectMusicTrack(theme, backgroundMusicPrompt);
   return { url: track.url, source: "library" };
 }

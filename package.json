@@ -9,7 +9,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.967.0",
@@ -26,12 +29,17 @@
     "stripe": "20.1.0"
   },
   "devDependencies": {
+    "@jest/globals": "^30.2.0",
+    "@types/jest": "^30.0.0",
     "@types/node": "22.15.17",
     "@types/react": "19.0.10",
     "@types/react-dom": "19.0.4",
     "autoprefixer": "10.4.23",
+    "dotenv": "^17.2.4",
+    "jest": "^30.2.0",
     "postcss": "8.5.6",
     "tailwindcss": "4.1.18",
+    "ts-jest": "^29.4.6",
     "typescript": "5.7.3"
   }
 }
