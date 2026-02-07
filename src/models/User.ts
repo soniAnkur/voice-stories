@@ -1,10 +1,14 @@
 import mongoose, { Schema, Document } from "mongoose";
 
+export type VoiceType = "cloned" | "preset";
+
 export interface IUser extends Document {
   _id: mongoose.Types.ObjectId;
   email: string;
   phone?: string;
-  elevenlabsVoiceId?: string;
+  elevenlabsVoiceId?: string;  // Cloned voice ID
+  voiceType: VoiceType;        // Whether to use cloned or preset voice
+  presetVoiceId?: string;      // Selected preset voice ID
   stripeCustomerId?: string;
   profileImageUrl?: string;
   createdAt: Date;
@@ -24,6 +28,14 @@ const UserSchema = new Schema<IUser>(
       trim: true,
     },
     elevenlabsVoiceId: {
+      type: String,
+    },
+    voiceType: {
+      type: String,
+      enum: ["cloned", "preset"],
+      default: "cloned",
+    },
+    presetVoiceId: {
       type: String,
     },
     stripeCustomerId: {
