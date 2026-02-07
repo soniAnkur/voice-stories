@@ -26,6 +26,17 @@ const BEDTIME_VOICE_SETTINGS: VoiceSettings = {
   speed: 0.7,            // Slowest speed for sleep-inducing narration
 };
 
+// ElevenLabs model selection
+// eleven_v3 = highest quality, best for audio tags
+// eleven_turbo_v2_5 = faster, good for previews
+type TTSModel = "eleven_v3" | "eleven_turbo_v2_5";
+
+// Use turbo model for short text (previews), v3 for full stories
+function selectTTSModel(textLength: number): TTSModel {
+  // Use turbo for text under 500 chars (roughly preview length)
+  return textLength < 500 ? "eleven_turbo_v2_5" : "eleven_v3";
+}
+
 /**
  * Clone a voice from an audio sample
  * Returns the voice_id to be stored for the user
@@ -143,6 +154,11 @@ export async function textToSpeech(
   voiceId: string,
   settings: VoiceSettings = BEDTIME_VOICE_SETTINGS
 ): Promise<Buffer> {
+  // Validate input
+  if (!text || text.trim().length === 0) {
+    throw new Error("Text is required for TTS");
+  }
+
   // Split into chunks if text is too long
   const chunks = splitTextIntoChunks(text, MAX_CHUNK_SIZE);
 
@@ -195,12 +211,16 @@ async function singleTextToSpeechWithFallback(
 
 /**
  * Single TTS request (under character limit)
+ * Uses turbo model for short text (previews), v3 for full stories
  */
 async function singleTextToSpeech(
   text: string,
   voiceId: string,
   settings: VoiceSettings
 ): Promise<Buffer> {
+  // Select model based on text length (turbo for previews, v3 for full stories)
+  const model = selectTTSModel(text.length);
+
   const response = await fetch(`${BASE_URL}/text-to-speech/${voiceId}`, {
     method: "POST",
     headers: {
@@ -209,7 +229,7 @@ async function singleTextToSpeech(
     },
     body: JSON.stringify({
       text,
-      model_id: "eleven_v3",  // v3 for audio tag support
+      model_id: model,  // Turbo for speed, v3 for quality
       voice_settings: settings, // speed is now inside voice_settings (0.7 = slowest)
     }),
   });
