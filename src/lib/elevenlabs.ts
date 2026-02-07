@@ -1,5 +1,10 @@
+import { isKieConfigured, kieTextToSpeech, KieVoiceSettings } from "./kie";
+
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY!;
 const BASE_URL = "https://api.elevenlabs.io/v1";
+
+// TTS Provider: 'kie' for Kie.ai (30-50% cheaper), 'elevenlabs' for direct
+const TTS_PROVIDER = process.env.TTS_PROVIDER || (isKieConfigured() ? "kie" : "elevenlabs");
 
 interface VoiceSettings {
   stability: number;
@@ -118,6 +123,9 @@ function splitTextIntoChunks(text: string, maxSize: number): string[] {
 
 /**
  * Generate speech from text using a cloned voice
+ * Uses Kie.ai (ElevenLabs proxy) for 30-50% cost savings,
+ * with fallback to direct ElevenLabs API.
+ *
  * Uses eleven_v3 model for best expressiveness with audio tags
  * Automatically handles long texts by chunking
  *
@@ -139,8 +147,8 @@ export async function textToSpeech(
   const chunks = splitTextIntoChunks(text, MAX_CHUNK_SIZE);
 
   if (chunks.length === 1) {
-    // Single chunk - normal request
-    return singleTextToSpeech(chunks[0], voiceId, settings);
+    // Single chunk - try Kie.ai first, fallback to direct ElevenLabs
+    return singleTextToSpeechWithFallback(chunks[0], voiceId, settings);
   }
 
   // Multiple chunks - generate audio for each and concatenate
@@ -149,12 +157,40 @@ export async function textToSpeech(
 
   for (let i = 0; i < chunks.length; i++) {
     console.log(`   Processing chunk ${i + 1}/${chunks.length} (${chunks[i].length} chars)`);
-    const buffer = await singleTextToSpeech(chunks[i], voiceId, settings);
+    const buffer = await singleTextToSpeechWithFallback(chunks[i], voiceId, settings);
     audioBuffers.push(buffer);
   }
 
   // Concatenate MP3 buffers (MP3 files can be simply concatenated)
   return Buffer.concat(audioBuffers);
+}
+
+/**
+ * Single TTS request with Kie.ai fallback to direct ElevenLabs
+ */
+async function singleTextToSpeechWithFallback(
+  text: string,
+  voiceId: string,
+  settings: VoiceSettings
+): Promise<Buffer> {
+  // Try Kie.ai first if configured and enabled
+  if (TTS_PROVIDER === "kie" && isKieConfigured()) {
+    try {
+      const kieSettings: KieVoiceSettings = {
+        stability: settings.stability,
+        similarity_boost: settings.similarity_boost,
+        style: settings.style,
+        speed: settings.speed,
+      };
+      return await kieTextToSpeech(text, voiceId, kieSettings);
+    } catch (error) {
+      console.warn("Kie.ai TTS failed, falling back to direct ElevenLabs:", error);
+      // Fall through to direct ElevenLabs
+    }
+  }
+
+  // Direct ElevenLabs API
+  return singleTextToSpeech(text, voiceId, settings);
 }
 
 /**
