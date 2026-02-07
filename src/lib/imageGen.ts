@@ -1,7 +1,15 @@
 import { GoogleGenAI } from "@google/genai";
 import crypto from "crypto";
+import {
+  isKieImageConfigured,
+  kieGenerateCoverImage,
+  kieGenerateProfileImage,
+} from "./kie-image";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+
+// Image Provider: 'kie' for Kie.ai 4o Image (30-50% cheaper), 'gemini' for direct
+const IMAGE_PROVIDER = process.env.IMAGE_PROVIDER || (isKieImageConfigured() ? "kie" : "gemini");
 
 // Profile avatar style variations
 const AVATAR_STYLES = [
@@ -16,11 +24,39 @@ const AVATAR_STYLES = [
 ];
 
 /**
- * Generate a cover illustration for a story using Gemini 2.5 Flash Image
- * Free tier: 500 images/day, paid: ~$0.039/image
+ * Generate a cover illustration for a story
+ * Uses Kie.ai 4o Image (30-50% cheaper) with Gemini fallback
  * Returns a Buffer of the PNG image, or null on failure
  */
 export async function generateCoverImage(
+  childName: string,
+  childAge: number,
+  interests: string,
+  theme: string = "adventure"
+): Promise<Buffer | null> {
+  // Try Kie.ai first if configured and enabled
+  if (IMAGE_PROVIDER === "kie" && isKieImageConfigured()) {
+    try {
+      console.log("Attempting cover image generation via Kie.ai...");
+      const result = await kieGenerateCoverImage(childName, childAge, interests, theme);
+      if (result) {
+        console.log(`Generated cover image via Kie.ai: ${(result.length / 1024).toFixed(0)}KB`);
+        return result;
+      }
+    } catch (error) {
+      console.warn("Kie.ai cover image failed, falling back to Gemini:", error);
+    }
+  }
+
+  // Fallback to Gemini
+  return generateCoverImageWithGemini(childName, childAge, interests, theme);
+}
+
+/**
+ * Generate cover image using Gemini 2.5 Flash Image
+ * Free tier: 500 images/day, paid: ~$0.039/image
+ */
+async function generateCoverImageWithGemini(
   childName: string,
   childAge: number,
   interests: string,
@@ -81,7 +117,7 @@ Square composition, centered subject matter.`;
       if (part.inlineData?.data) {
         const buffer = Buffer.from(part.inlineData.data, "base64");
         console.log(
-          `Generated cover image: ${(buffer.length / 1024).toFixed(0)}KB`
+          `Generated cover image via Gemini: ${(buffer.length / 1024).toFixed(0)}KB`
         );
         return buffer;
       }
@@ -97,10 +133,33 @@ Square composition, centered subject matter.`;
 
 /**
  * Generate a unique profile avatar for a user based on their email
+ * Uses Kie.ai 4o Image (30-50% cheaper) with Gemini fallback
  * Uses email hash to deterministically select style for consistency
  * Returns a Buffer of the PNG image, or null on failure
  */
 export async function generateProfileImage(email: string): Promise<Buffer | null> {
+  // Try Kie.ai first if configured and enabled
+  if (IMAGE_PROVIDER === "kie" && isKieImageConfigured()) {
+    try {
+      console.log("Attempting profile image generation via Kie.ai...");
+      const result = await kieGenerateProfileImage(email);
+      if (result) {
+        console.log(`Generated profile image via Kie.ai: ${(result.length / 1024).toFixed(0)}KB`);
+        return result;
+      }
+    } catch (error) {
+      console.warn("Kie.ai profile image failed, falling back to Gemini:", error);
+    }
+  }
+
+  // Fallback to Gemini
+  return generateProfileImageWithGemini(email);
+}
+
+/**
+ * Generate profile image using Gemini 2.5 Flash Image
+ */
+async function generateProfileImageWithGemini(email: string): Promise<Buffer | null> {
   if (!GEMINI_API_KEY) {
     console.warn("GEMINI_API_KEY not set, skipping profile image generation");
     return null;
@@ -151,7 +210,7 @@ Square canvas with the circular design centered.`;
       if (part.inlineData?.data) {
         const buffer = Buffer.from(part.inlineData.data, "base64");
         console.log(
-          `Generated profile image for ${email}: ${(buffer.length / 1024).toFixed(0)}KB (style: ${avatarStyle.style})`
+          `Generated profile image for ${email} via Gemini: ${(buffer.length / 1024).toFixed(0)}KB (style: ${avatarStyle.style})`
         );
         return buffer;
       }
