@@ -1,4 +1,5 @@
 import { isKieConfigured, kieTextToSpeech, KieVoiceSettings } from "./kie";
+import { isPresetVoice, getDefaultVoicePreset } from "./voices";
 
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY!;
 const BASE_URL = "https://api.elevenlabs.io/v1";
@@ -182,27 +183,31 @@ export async function textToSpeech(
 }
 
 /**
- * Single TTS request with Kie.ai fallback to direct ElevenLabs
+ * Single TTS request - uses Kie.ai if configured, otherwise direct ElevenLabs
  */
 async function singleTextToSpeechWithFallback(
   text: string,
   voiceId: string,
   settings: VoiceSettings
 ): Promise<Buffer> {
-  // Try Kie.ai first if configured and enabled
+  // Use Kie.ai if configured and enabled (no fallback)
   if (TTS_PROVIDER === "kie" && isKieConfigured()) {
-    try {
-      const kieSettings: KieVoiceSettings = {
-        stability: settings.stability,
-        similarity_boost: settings.similarity_boost,
-        style: settings.style,
-        speed: settings.speed,
-      };
-      return await kieTextToSpeech(text, voiceId, kieSettings);
-    } catch (error) {
-      console.warn("Kie.ai TTS failed, falling back to direct ElevenLabs:", error);
-      // Fall through to direct ElevenLabs
+    // Kie.ai only supports preset voices, not cloned voices
+    // If using a cloned voice, use the default preset instead
+    let effectiveVoiceId = voiceId;
+    if (!isPresetVoice(voiceId)) {
+      const defaultPreset = getDefaultVoicePreset();
+      console.log(`[Kie.ai TTS] Cloned voice not supported, using preset: ${defaultPreset.name}`);
+      effectiveVoiceId = defaultPreset.id;
     }
+
+    const kieSettings: KieVoiceSettings = {
+      stability: settings.stability,
+      similarity_boost: settings.similarity_boost,
+      style: settings.style,
+      speed: settings.speed,
+    };
+    return await kieTextToSpeech(text, effectiveVoiceId, kieSettings);
   }
 
   // Direct ElevenLabs API

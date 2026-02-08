@@ -73,34 +73,45 @@ export async function kieTextToSpeech(
   }
 
   // Create the TTS task
+  const requestBody = {
+    model: "elevenlabs/text-to-speech-multilingual-v2",
+    input: {
+      text,
+      voice: voiceId,
+      stability: settings.stability ?? 0.5,
+      similarity_boost: settings.similarity_boost ?? 0.75,
+      style: settings.style ?? 0,
+      speed: settings.speed ?? 1.0,
+    },
+  };
+
+  console.log("[Kie.ai TTS] Creating task with voice:", voiceId);
+
   const taskResponse = await fetch(`${KIE_BASE_URL}/jobs/createTask`, {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${KIE_API_KEY}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      model: "elevenlabs/text-to-speech-multilingual-v2",
-      input: {
-        text,
-        voice: voiceId,
-        stability: settings.stability ?? 0.5,
-        similarity_boost: settings.similarity_boost ?? 0.75,
-        style: settings.style ?? 0,
-        speed: settings.speed ?? 1.0,
-      },
-    }),
+    body: JSON.stringify(requestBody),
   });
 
+  const responseText = await taskResponse.text();
+  console.log("[Kie.ai TTS] Response:", responseText);
+
   if (!taskResponse.ok) {
-    const error = await taskResponse.text();
-    throw new Error(`Kie.ai TTS task creation failed: ${error}`);
+    throw new Error(`Kie.ai TTS task creation failed (${taskResponse.status}): ${responseText}`);
   }
 
-  const taskData: KieTaskResponse = await taskResponse.json();
+  let taskData: KieTaskResponse;
+  try {
+    taskData = JSON.parse(responseText);
+  } catch {
+    throw new Error(`Kie.ai TTS invalid response: ${responseText}`);
+  }
 
   if (taskData.code !== 200) {
-    throw new Error(`Kie.ai TTS failed: ${taskData.message}`);
+    throw new Error(`Kie.ai TTS failed (code ${taskData.code}): ${taskData.message || responseText}`);
   }
 
   const { taskId } = taskData.data;
@@ -126,14 +137,20 @@ export async function kieTextToSpeech(
     const result: KieTaskResult = await statusResponse.json();
 
     if (result.data.state === "success") {
-      // Get the audio URL from the result
+      console.log("[Kie.ai TTS] Task completed, result:", JSON.stringify(result.data));
+
+      // Get the audio URL from the result - try multiple possible field names
       const audioUrl =
         result.data.resultJson?.audio_url ||
         result.data.resultJson?.url ||
-        result.data.resultJson?.output;
+        result.data.resultJson?.output ||
+        result.data.resultJson?.audio ||
+        result.data.resultJson?.file_url ||
+        (result.data as unknown as { audio_url?: string }).audio_url ||
+        (result.data as unknown as { url?: string }).url;
 
       if (!audioUrl) {
-        throw new Error("Kie.ai TTS completed but no audio URL in response");
+        throw new Error(`Kie.ai TTS completed but no audio URL. Response: ${JSON.stringify(result.data)}`);
       }
 
       // Download the audio file

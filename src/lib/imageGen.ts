@@ -25,7 +25,7 @@ const AVATAR_STYLES = [
 
 /**
  * Generate a cover illustration for a story
- * Uses Kie.ai 4o Image (30-50% cheaper) with Gemini fallback
+ * Uses Kie.ai 4o Image if configured, otherwise Gemini
  * Returns a Buffer of the PNG image, or null on failure
  */
 export async function generateCoverImage(
@@ -34,21 +34,17 @@ export async function generateCoverImage(
   interests: string,
   theme: string = "adventure"
 ): Promise<Buffer | null> {
-  // Try Kie.ai first if configured and enabled
+  // Use Kie.ai if configured and enabled (no fallback)
   if (IMAGE_PROVIDER === "kie" && isKieImageConfigured()) {
-    try {
-      console.log("Attempting cover image generation via Kie.ai...");
-      const result = await kieGenerateCoverImage(childName, childAge, interests, theme);
-      if (result) {
-        console.log(`Generated cover image via Kie.ai: ${(result.length / 1024).toFixed(0)}KB`);
-        return result;
-      }
-    } catch (error) {
-      console.warn("Kie.ai cover image failed, falling back to Gemini:", error);
+    console.log("Generating cover image via Kie.ai...");
+    const result = await kieGenerateCoverImage(childName, childAge, interests, theme);
+    if (result) {
+      console.log(`Generated cover image via Kie.ai: ${(result.length / 1024).toFixed(0)}KB`);
     }
+    return result;
   }
 
-  // Fallback to Gemini
+  // Use Gemini
   return generateCoverImageWithGemini(childName, childAge, interests, theme);
 }
 
@@ -133,26 +129,22 @@ Square composition, centered subject matter.`;
 
 /**
  * Generate a unique profile avatar for a user based on their email
- * Uses Kie.ai 4o Image (30-50% cheaper) with Gemini fallback
+ * Uses Kie.ai 4o Image if configured, otherwise Gemini
  * Uses email hash to deterministically select style for consistency
  * Returns a Buffer of the PNG image, or null on failure
  */
 export async function generateProfileImage(email: string): Promise<Buffer | null> {
-  // Try Kie.ai first if configured and enabled
+  // Use Kie.ai if configured and enabled (no fallback)
   if (IMAGE_PROVIDER === "kie" && isKieImageConfigured()) {
-    try {
-      console.log("Attempting profile image generation via Kie.ai...");
-      const result = await kieGenerateProfileImage(email);
-      if (result) {
-        console.log(`Generated profile image via Kie.ai: ${(result.length / 1024).toFixed(0)}KB`);
-        return result;
-      }
-    } catch (error) {
-      console.warn("Kie.ai profile image failed, falling back to Gemini:", error);
+    console.log("Generating profile image via Kie.ai...");
+    const result = await kieGenerateProfileImage(email);
+    if (result) {
+      console.log(`Generated profile image via Kie.ai: ${(result.length / 1024).toFixed(0)}KB`);
     }
+    return result;
   }
 
-  // Fallback to Gemini
+  // Use Gemini
   return generateProfileImageWithGemini(email);
 }
 
