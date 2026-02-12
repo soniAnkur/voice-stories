@@ -18,7 +18,8 @@ const ACHIEVEMENTS = [
     description: "Created your first story",
     requirement: 1,
     type: "created",
-    color: "from-yellow-500 to-orange-500",
+    gradient: "linear-gradient(135deg, #eab308, #f97316)",
+    glow: "rgba(234, 179, 8, 0.4)",
   },
   {
     id: "storyteller",
@@ -27,7 +28,8 @@ const ACHIEVEMENTS = [
     description: "Created 10 stories",
     requirement: 10,
     type: "created",
-    color: "from-blue-500 to-purple-500",
+    gradient: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
+    glow: "rgba(59, 130, 246, 0.4)",
   },
   {
     id: "master-narrator",
@@ -36,7 +38,8 @@ const ACHIEVEMENTS = [
     description: "Created 30 stories",
     requirement: 30,
     type: "created",
-    color: "from-pink-500 to-red-500",
+    gradient: "linear-gradient(135deg, #ec4899, #ef4444)",
+    glow: "rgba(236, 72, 153, 0.4)",
   },
   {
     id: "listener",
@@ -45,8 +48,16 @@ const ACHIEVEMENTS = [
     description: "Listened to 20 stories",
     requirement: 20,
     type: "listened",
-    color: "from-green-500 to-teal-500",
+    gradient: "linear-gradient(135deg, #22c55e, #14b8a6)",
+    glow: "rgba(34, 197, 94, 0.4)",
   },
+];
+
+const SETTINGS = [
+  { icon: "🔔", label: "Notifications", gradient: "linear-gradient(135deg, #f59e0b, #d97706)" },
+  { icon: "🎙️", label: "Voice Settings", gradient: "linear-gradient(135deg, #8b5cf6, #7c3aed)" },
+  { icon: "❓", label: "Help & Support", gradient: "linear-gradient(135deg, #06b6d4, #0891b2)" },
+  { icon: "📜", label: "Terms & Privacy", gradient: "linear-gradient(135deg, #6366f1, #4f46e5)" },
 ];
 
 export default function ProfilePage() {
@@ -97,40 +108,127 @@ export default function ProfilePage() {
           </div>
         ) : (
           <>
-            {/* Profile Header */}
-            <div className="profile-header">
-              <div className="profile-avatar">
-                {profile?.email?.charAt(0).toUpperCase() || "?"}
+            {/* Profile Header - Fancy */}
+            <div style={{ textAlign: 'center', padding: '24px 16px 32px', position: 'relative' }}>
+              {/* Avatar with glow */}
+              <div style={{ position: 'relative', display: 'inline-block', marginBottom: '16px' }}>
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: '-4px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #8b5cf6, #ec4899)',
+                    filter: 'blur(15px)',
+                    opacity: 0.6,
+                  }}
+                />
+                <div
+                  style={{
+                    position: 'relative',
+                    width: '100px',
+                    height: '100px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #8b5cf6, #6366f1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '40px',
+                    fontWeight: 700,
+                    color: 'white',
+                    border: '3px solid rgba(255, 255, 255, 0.2)',
+                    boxShadow: '0 10px 40px rgba(139, 92, 246, 0.4)',
+                  }}
+                >
+                  {profile?.email?.charAt(0).toUpperCase() || "?"}
+                </div>
               </div>
-              <h2 className="profile-name">
+              <h2 style={{ fontSize: '22px', fontWeight: 700, color: 'white', marginBottom: '4px' }}>
                 {profile?.email?.split("@")[0] || "Guest"}
               </h2>
-              <p className="profile-email">{profile?.email || "Not signed in"}</p>
+              <p style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.6)' }}>
+                {profile?.email || "Not signed in"}
+              </p>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-2 gap-4 px-4 mb-8">
-              <div className="dark-card p-4 text-center">
-                <div className="text-3xl font-bold text-purple-400">
+            {/* Stats - Fancy */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', padding: '0 16px', marginBottom: '32px' }}>
+              <div
+                style={{
+                  padding: '20px',
+                  textAlign: 'center',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '24px',
+                  position: 'relative',
+                  overflow: 'hidden',
+                }}
+              >
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '-20px',
+                    right: '-20px',
+                    width: '80px',
+                    height: '80px',
+                    background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(236, 72, 153, 0.3))',
+                    borderRadius: '50%',
+                    filter: 'blur(20px)',
+                  }}
+                />
+                <div style={{ fontSize: '36px', fontWeight: 800, background: 'linear-gradient(135deg, #a78bfa, #f472b6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', position: 'relative' }}>
                   {profile?.storiesCreated || 0}
                 </div>
-                <div className="text-sm text-secondary">Stories Created</div>
+                <div style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.6)', marginTop: '4px' }}>Stories Created</div>
               </div>
-              <div className="dark-card p-4 text-center">
-                <div className="text-3xl font-bold text-purple-400">
+              <div
+                style={{
+                  padding: '20px',
+                  textAlign: 'center',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '24px',
+                  position: 'relative',
+                  overflow: 'hidden',
+                }}
+              >
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '-20px',
+                    right: '-20px',
+                    width: '80px',
+                    height: '80px',
+                    background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.3), rgba(34, 197, 94, 0.3))',
+                    borderRadius: '50%',
+                    filter: 'blur(20px)',
+                  }}
+                />
+                <div style={{ fontSize: '36px', fontWeight: 800, background: 'linear-gradient(135deg, #22d3ee, #4ade80)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', position: 'relative' }}>
                   {profile?.storiesListened || 0}
                 </div>
-                <div className="text-sm text-secondary">Stories Listened</div>
+                <div style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.6)', marginTop: '4px' }}>Stories Listened</div>
               </div>
             </div>
 
-            {/* Achievements */}
-            <section className="mb-8">
+            {/* Achievements - Fancy */}
+            <section style={{ marginBottom: '32px' }}>
               <div className="section-header">
                 <h2 className="section-title">Achievements</h2>
-                <span className="text-secondary text-sm">View More</span>
+                <span style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '14px' }}>View More</span>
               </div>
-              <div className="horizontal-scroll">
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '14px',
+                  overflowX: 'auto',
+                  padding: '8px 16px 16px',
+                  scrollSnapType: 'x mandatory',
+                  WebkitOverflowScrolling: 'touch',
+                  scrollbarWidth: 'none',
+                }}
+              >
                 {ACHIEVEMENTS.map((achievement) => {
                   const unlocked = isAchievementUnlocked(achievement);
                   const progress = getAchievementProgress(achievement);
@@ -138,70 +236,126 @@ export default function ProfilePage() {
                   return (
                     <div
                       key={achievement.id}
-                      className={`achievement-badge ${unlocked ? "" : "locked"}`}
+                      style={{
+                        flexShrink: 0,
+                        minWidth: '140px',
+                        scrollSnapAlign: 'start',
+                      }}
                     >
                       <div
-                        className={`achievement-icon bg-gradient-to-br ${achievement.color}`}
-                        style={{ opacity: unlocked ? 1 : 0.4 }}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          padding: '20px 16px',
+                          background: 'rgba(255, 255, 255, 0.05)',
+                          backdropFilter: 'blur(10px)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          borderRadius: '24px',
+                          position: 'relative',
+                          overflow: 'hidden',
+                          opacity: unlocked ? 1 : 0.6,
+                        }}
                       >
-                        {achievement.icon}
-                      </div>
-                      <div className="achievement-title">{achievement.title}</div>
-                      <div className="achievement-desc">{achievement.description}</div>
-                      {!unlocked && (
-                        <div className="w-full h-1 bg-gray-700 rounded-full mt-2 overflow-hidden">
+                        {/* Glow effect for unlocked */}
+                        {unlocked && (
                           <div
-                            className="h-full bg-purple-500 rounded-full transition-all"
-                            style={{ width: `${progress * 100}%` }}
+                            style={{
+                              position: 'absolute',
+                              inset: '-10px',
+                              background: achievement.glow,
+                              filter: 'blur(25px)',
+                              opacity: 0.4,
+                            }}
                           />
+                        )}
+                        <div
+                          style={{
+                            width: '60px',
+                            height: '60px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            background: achievement.gradient,
+                            borderRadius: '20px',
+                            fontSize: '28px',
+                            marginBottom: '12px',
+                            boxShadow: unlocked ? '0 8px 25px rgba(0, 0, 0, 0.3)' : 'none',
+                            position: 'relative',
+                          }}
+                        >
+                          {achievement.icon}
                         </div>
-                      )}
+                        <div style={{ fontWeight: 600, fontSize: '14px', color: 'white', textAlign: 'center', marginBottom: '4px', position: 'relative' }}>
+                          {achievement.title}
+                        </div>
+                        <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)', textAlign: 'center', position: 'relative' }}>
+                          {achievement.description}
+                        </div>
+                        {!unlocked && (
+                          <div style={{ width: '100%', height: '4px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '2px', marginTop: '12px', overflow: 'hidden' }}>
+                            <div
+                              style={{
+                                height: '100%',
+                                background: achievement.gradient,
+                                borderRadius: '2px',
+                                width: `${progress * 100}%`,
+                                transition: 'width 0.3s ease',
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
                     </div>
                   );
                 })}
               </div>
             </section>
 
-            {/* Settings */}
-            <section className="px-4 mb-8">
-              <h2 className="section-title mb-4">Settings</h2>
-              <div className="space-y-2">
-                <button className="w-full dark-card p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-xl">🔔</span>
-                    <span>Notifications</span>
-                  </div>
-                  <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-                <button className="w-full dark-card p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-xl">🎙️</span>
-                    <span>Voice Settings</span>
-                  </div>
-                  <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-                <button className="w-full dark-card p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-xl">❓</span>
-                    <span>Help & Support</span>
-                  </div>
-                  <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-                <button className="w-full dark-card p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-xl">📜</span>
-                    <span>Terms & Privacy</span>
-                  </div>
-                  <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
+            {/* Settings - Fancy */}
+            <section style={{ padding: '0 16px', marginBottom: '32px' }}>
+              <h2 className="section-title" style={{ marginBottom: '16px' }}>Settings</h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {SETTINGS.map((setting, index) => (
+                  <button
+                    key={setting.label}
+                    style={{
+                      width: '100%',
+                      padding: '16px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      backdropFilter: 'blur(10px)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '20px',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                      <div
+                        style={{
+                          width: '42px',
+                          height: '42px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          background: setting.gradient,
+                          borderRadius: '14px',
+                          fontSize: '20px',
+                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
+                        }}
+                      >
+                        {setting.icon}
+                      </div>
+                      <span style={{ fontWeight: 500, color: 'white', fontSize: '15px' }}>{setting.label}</span>
+                    </div>
+                    <svg style={{ width: '20px', height: '20px', color: 'rgba(255, 255, 255, 0.4)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                ))}
               </div>
             </section>
           </>

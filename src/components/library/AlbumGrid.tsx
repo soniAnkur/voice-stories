@@ -31,13 +31,20 @@ export function AlbumGrid() {
 
   if (loading) {
     return (
-      <div className="album-grid">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="rounded-2xl overflow-hidden animate-pulse">
-            <div className="aspect-[4/5] bg-gradient-to-br from-gray-700/50 to-gray-800/50 relative">
+      <div className="album-grid-masonry">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div
+            key={i}
+            className="album-skeleton"
+            style={{ animationDelay: `${i * 0.1}s` }}
+          >
+            <div className={`${i % 3 === 0 ? 'aspect-[3/5]' : i % 2 === 0 ? 'aspect-square' : 'aspect-[4/5]'} rounded-[32px] bg-gradient-to-br from-purple-500/20 to-blue-500/20 relative overflow-hidden`}>
+              <div className="absolute inset-0 shimmer" />
               <div className="absolute inset-x-0 bottom-0 p-4">
-                <div className="h-4 bg-gray-200/20 rounded w-3/4 mb-2" />
-                <div className="h-3 bg-gray-200/20 rounded w-1/2" />
+                <div className="backdrop-blur-sm bg-white/5 rounded-2xl p-3">
+                  <div className="h-4 bg-white/10 rounded-lg w-3/4 mb-2" />
+                  <div className="h-3 bg-white/10 rounded-lg w-1/2" />
+                </div>
               </div>
             </div>
           </div>
@@ -75,9 +82,9 @@ export function AlbumGrid() {
   }
 
   return (
-    <div className="album-grid">
-      {albums.map((album) => (
-        <AlbumCard key={album.voiceId} album={album} />
+    <div className="album-grid-masonry">
+      {albums.map((album, index) => (
+        <AlbumCard key={album.voiceId} album={album} index={index} />
       ))}
     </div>
   );
