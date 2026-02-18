@@ -1,6 +1,31 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 export type StoryStatus = "preview" | "paid" | "generating" | "complete" | "failed";
+export type VideoStatus = "pending" | "generating" | "complete" | "failed";
+
+// Video generation progress tracking
+export interface IVideoProgress {
+  step: "analyzing" | "images" | "videos" | "uploading" | "complete";
+  stepNumber: number;
+  totalSteps: number;
+  currentItem?: number;
+  totalItems?: number;
+  message: string;
+  startedAt?: Date;
+  updatedAt?: Date;
+}
+
+// Story section for video mode
+export interface IStorySection {
+  sectionNumber: number;
+  title: string;
+  text: string;
+  cinematicDescription: string;
+  startImageUrl?: string;
+  endImageUrl?: string;
+  videoUrl?: string;
+  videoDurationSeconds?: number;
+}
 
 export interface IStory extends Document {
   _id: mongoose.Types.ObjectId;
@@ -24,6 +49,13 @@ export interface IStory extends Document {
   musicVolume?: number;
   status: StoryStatus;
   stripeSessionId?: string;
+  // Video mode fields
+  childImageUrl?: string;          // Kid's reference photo for style
+  storySections?: IStorySection[]; // Array of section data
+  finalVideoUrl?: string;          // Final stitched video
+  videoMode?: boolean;             // true = video story, false = audio only
+  videoStatus?: VideoStatus;       // Video generation status
+  videoProgress?: IVideoProgress;  // Detailed progress tracking
   createdAt: Date;
   updatedAt: Date;
 }
@@ -103,6 +135,43 @@ const StorySchema = new Schema<IStory>(
     },
     stripeSessionId: {
       type: String,
+    },
+    // Video mode fields
+    childImageUrl: {
+      type: String,
+    },
+    storySections: [
+      {
+        sectionNumber: { type: Number },
+        title: { type: String },
+        text: { type: String },
+        cinematicDescription: { type: String },
+        startImageUrl: { type: String },
+        endImageUrl: { type: String },
+        videoUrl: { type: String },
+        videoDurationSeconds: { type: Number },
+      },
+    ],
+    finalVideoUrl: {
+      type: String,
+    },
+    videoMode: {
+      type: Boolean,
+      default: false,
+    },
+    videoStatus: {
+      type: String,
+      enum: ["pending", "generating", "complete", "failed"],
+    },
+    videoProgress: {
+      step: { type: String, enum: ["analyzing", "images", "videos", "uploading", "complete"] },
+      stepNumber: { type: Number },
+      totalSteps: { type: Number },
+      currentItem: { type: Number },
+      totalItems: { type: Number },
+      message: { type: String },
+      startedAt: { type: Date },
+      updatedAt: { type: Date },
     },
   },
   {

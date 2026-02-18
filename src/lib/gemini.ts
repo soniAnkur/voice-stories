@@ -9,6 +9,21 @@ interface StoryGenerationResult {
   backgroundMusicPrompt: string;
 }
 
+// Section-based story result for video mode
+export interface StorySectionResult {
+  sectionNumber: number;
+  title: string;
+  text: string;
+  cinematicDescription: string;
+}
+
+export interface StoryWithSectionsResult {
+  title: string;
+  sections: StorySectionResult[];
+  backgroundMusicPrompt: string;
+  fullStoryText: string; // Combined text for TTS
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // STORY VARIETY SYSTEM - Makes each story unique and engaging
 // ═══════════════════════════════════════════════════════════════════════════
@@ -703,5 +718,439 @@ async function callGemini(userPrompt: string): Promise<StoryGenerationResult> {
       story: content,
       backgroundMusicPrompt: "soft piano lullaby gentle",
     };
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// VIDEO MODE: Story with 4 sections and cinematographic descriptions
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Generate a full 10-minute story with 4 distinct sections for video mode.
+ * Each section includes a cinematographic description for image/video generation.
+ */
+export async function generateFullStoryWithSections(
+  childName: string,
+  childAge: number,
+  interests: string,
+  theme: string = "adventure",
+  customPrompt?: string
+): Promise<StoryWithSectionsResult> {
+  // Select random elements for this unique story
+  const archetype = pickRandom(STORY_ARCHETYPES);
+  const themeData = THEME_ELEMENTS[theme] || THEME_ELEMENTS.adventure;
+  const settings = pickMultiple(themeData.settings, 4);
+  const characters = pickMultiple(themeData.characters, 3);
+  const objects = pickMultiple(themeData.objects, 2);
+  const opening = pickRandom(OPENING_VARIATIONS);
+
+  const customPromptSection = customPrompt
+    ? `\nSpecial request from the creator: ${customPrompt}\n`
+    : '';
+
+  const userPrompt = `Create a UNIQUE, engaging 10-minute bedtime story for ${childName}, age ${childAge}.
+
+═══════════════════════════════════════
+VIDEO STORY MODE - 4 SECTIONS
+═══════════════════════════════════════
+
+This story will be turned into a VIDEO with images and animations.
+You MUST structure it into exactly 4 sections.
+Each section needs a CINEMATOGRAPHIC DESCRIPTION for the visuals.
+
+WORD COUNT: 1400-1600 words total. NON-NEGOTIABLE!
+
+═══════════════════════════════════════
+THIS STORY'S UNIQUE DNA
+═══════════════════════════════════════
+
+STORY ARCHETYPE: "${archetype.name}"
+${archetype.description}
+- Hook concept: ${childName} ${archetype.hook}
+- Journey theme: ${archetype.journey}
+- Climax moment: ${archetype.climax}
+
+THEME: ${theme}
+Atmosphere: ${themeData.atmosphere}
+
+SETTINGS TO VISIT (one per section):
+1. ${settings[0]}
+2. ${settings[1]}
+3. ${settings[2]}
+4. ${settings[3]}
+
+CHARACTERS TO MEET (give them NAMES):
+1. ${characters[0]}
+2. ${characters[1]}
+3. ${characters[2]}
+
+MAGICAL OBJECTS: ${objects[0]}, ${objects[1]}
+
+OPENING STYLE: "${opening}..."
+
+CHILD'S INTERESTS (weave these in): ${interests}
+${customPromptSection}
+
+═══════════════════════════════════════
+4-SECTION STRUCTURE (MUST FOLLOW)
+═══════════════════════════════════════
+
+SECTION 1 - "The Beginning" (~350 words)
+Setting: ${settings[0]}
+- Use the opening style
+- ${childName} ${archetype.hook}
+- Introduce the magical world
+- Meet first character
+CINEMATIC FOCUS: Establish the cozy, magical atmosphere
+
+SECTION 2 - "The Discovery" (~400 words)
+Setting: ${settings[1]}
+- Journey deeper into the adventure
+- Meet more characters
+- First challenge or puzzle
+CINEMATIC FOCUS: Show wonder and exploration
+
+SECTION 3 - "The Climax" (~450 words)
+Setting: ${settings[2]}
+- ${archetype.journey}
+- Face the main challenge
+- ${archetype.climax}
+CINEMATIC FOCUS: Exciting action, magical moments
+
+SECTION 4 - "The Peaceful End" (~350 words)
+Setting: ${settings[3]}
+- Celebration of success
+- Warm goodbyes with friends
+- ${childName} settles into peaceful sleep
+CINEMATIC FOCUS: Calming, dreamy, sleepy atmosphere
+
+═══════════════════════════════════════
+CINEMATOGRAPHIC DESCRIPTIONS
+═══════════════════════════════════════
+
+For each section, provide a "cinematicDescription" that describes:
+- The visual scene (colors, lighting, mood)
+- What the child looks like in the scene
+- Key visual elements and characters
+- Camera movement suggestion (slow pan, gentle zoom, etc.)
+
+This will be used to generate AI images and videos.
+Keep it vivid, warm, and child-friendly.
+Example: "A young child with curious eyes stands in a moonlit forest clearing. Soft blue and silver light filters through ancient oak trees. Tiny fireflies create gentle sparkles around them. A friendly owl with golden spectacles perches nearby. Camera slowly pans across the magical scene."
+
+═══════════════════════════════════════
+AGE ${childAge} VOCABULARY
+═══════════════════════════════════════
+${childAge <= 3 ? "Simple words. Very short sentences. Comforting repetition." : ""}
+${childAge >= 4 && childAge <= 5 ? "Playful words with fun sounds. Short sentences with rhythm." : ""}
+${childAge >= 6 && childAge <= 7 ? "Richer vocabulary. Show emotions, not just actions." : ""}
+${childAge >= 8 ? "Sophisticated narrative. Subtle humor. Meaningful themes." : ""}
+
+═══════════════════════════════════════
+AUDIO TAGS (Use naturally)
+═══════════════════════════════════════
+[softly] [excited] [whispers] [warmly] [playfully] [curiously] [pause] [long pause] [peacefully]
+
+═══════════════════════════════════════
+RESPONSE FORMAT (JSON)
+═══════════════════════════════════════
+
+{
+  "title": "A unique title for this story",
+  "backgroundMusicPrompt": "5 words for the mood",
+  "sections": [
+    {
+      "sectionNumber": 1,
+      "title": "Short title for section 1",
+      "text": "The story text for section 1 with audio tags... (~350 words)",
+      "cinematicDescription": "Visual description for AI image/video generation (2-3 sentences)"
+    },
+    {
+      "sectionNumber": 2,
+      "title": "Short title for section 2",
+      "text": "The story text for section 2... (~400 words)",
+      "cinematicDescription": "Visual description for section 2..."
+    },
+    {
+      "sectionNumber": 3,
+      "title": "Short title for section 3",
+      "text": "The story text for section 3... (~450 words)",
+      "cinematicDescription": "Visual description for section 3..."
+    },
+    {
+      "sectionNumber": 4,
+      "title": "Short title for section 4",
+      "text": "The story text for section 4... (~350 words)",
+      "cinematicDescription": "Visual description for section 4..."
+    }
+  ]
+}`;
+
+  return callGeminiForSections(userPrompt);
+}
+
+async function callGeminiForSections(userPrompt: string): Promise<StoryWithSectionsResult> {
+  if (!GEMINI_API_KEY) {
+    throw new Error("GEMINI_API_KEY is not set");
+  }
+
+  const response = await fetch(`${BASE_URL}?key=${GEMINI_API_KEY}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      contents: [
+        {
+          parts: [
+            {
+              text: `${SYSTEM_PROMPT}\n\n${userPrompt}`,
+            },
+          ],
+        },
+      ],
+      generationConfig: {
+        temperature: 0.9,
+        maxOutputTokens: 6000, // Larger for structured output
+        topP: 0.95,
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Gemini API failed: ${error}`);
+  }
+
+  const data = await response.json();
+  const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+  if (!content) {
+    throw new Error("No content in Gemini response");
+  }
+
+  // Parse JSON from response
+  let jsonStr = content.trim();
+  if (jsonStr.includes("```json")) {
+    jsonStr = jsonStr.split("```json")[1].split("```")[0].trim();
+  } else if (jsonStr.includes("```")) {
+    jsonStr = jsonStr.split("```")[1].split("```")[0].trim();
+  }
+
+  try {
+    const result = JSON.parse(jsonStr);
+
+    // Combine all section texts into fullStoryText for TTS
+    const fullStoryText = result.sections
+      .map((s: StorySectionResult) => s.text)
+      .join("\n\n[long pause]\n\n");
+
+    return {
+      title: result.title,
+      sections: result.sections,
+      backgroundMusicPrompt: result.backgroundMusicPrompt,
+      fullStoryText,
+    };
+  } catch (e) {
+    console.error("Failed to parse Gemini sections response:", e);
+    throw new Error("Failed to parse story sections from Gemini");
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// VIDEO MODE: Analyze existing story for video generation
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Analysis result for video generation from existing story
+ */
+export interface VideoStoryAnalysis {
+  mainCharacter: {
+    name: string;
+    appearance: string;
+  };
+  supportingCharacters: Array<{
+    name: string;
+    appearance: string;
+  }>;
+  setting: string;
+  sections: Array<{
+    sectionNumber: number;
+    title: string;
+    text: string;
+    startScene: string;
+    endScene: string;
+    cameraMovement: string;
+  }>;
+}
+
+/**
+ * Analyze an existing story to extract characters, scenes, and create
+ * story-specific visual descriptions for video generation.
+ *
+ * This reads the ACTUAL story content and creates cinematographic
+ * descriptions that match the real characters and plot.
+ */
+export async function analyzeStoryForVideo(
+  storyText: string,
+  childName?: string,
+  childAge?: number
+): Promise<VideoStoryAnalysis> {
+  if (!GEMINI_API_KEY) {
+    throw new Error("GEMINI_API_KEY is not set");
+  }
+
+  const userPrompt = `You are analyzing a children's bedtime story to create VIDEO scenes.
+Your job is to READ the story carefully and extract the ACTUAL characters, settings, and events.
+
+═══════════════════════════════════════
+STORY TEXT TO ANALYZE
+═══════════════════════════════════════
+
+${storyText}
+
+═══════════════════════════════════════
+YOUR TASK
+═══════════════════════════════════════
+
+1. EXTRACT the main character (the child in the story)
+   - Their name
+   - Create a detailed visual description for a children's book illustration
+   - Age: ${childAge || "young child"}
+   - Make them look like a cute, friendly cartoon child
+
+2. EXTRACT all supporting characters from the story
+   - Their names (as mentioned in the story)
+   - Visual descriptions that match how they're described
+
+3. IDENTIFY the overall setting/world of the story
+
+4. SPLIT the story into exactly 4 sections:
+   - Each section should be roughly equal length
+   - Each section should have a clear narrative arc
+
+5. For EACH section, create:
+   - title: A short descriptive title
+   - text: The actual story text for that section
+   - startScene: A detailed visual description of what we SEE at the START of this section
+   - endScene: A detailed visual description of what we SEE at the END of this section
+   - cameraMovement: How the camera should move (slow zoom, gentle pan, floating, etc.)
+
+═══════════════════════════════════════
+CRITICAL RULES FOR VISUAL DESCRIPTIONS
+═══════════════════════════════════════
+
+1. ONLY describe what's ACTUALLY in the story
+   - If the story mentions a "magic car", include the magic car
+   - If the story has a "friendly mouse named Whiskers", include Whiskers
+   - Do NOT invent characters or objects that aren't in the story
+
+2. MAINTAIN CONTINUITY between sections
+   - Section 1 END should visually connect to Section 2 START
+   - Characters should look consistent across all scenes
+   - The setting should evolve naturally
+
+3. INCLUDE the main character in EVERY scene
+   - Always mention ${childName || "the child"} by name
+   - Describe what they're doing, their expression, their position
+
+4. Use WARM, COZY, BEDTIME-APPROPRIATE imagery
+   - Soft lighting, gentle colors, safe atmosphere
+   - Children's storybook illustration style
+   - Nothing scary or dark
+
+═══════════════════════════════════════
+EXAMPLE (for a story about "Ocean and a magic car")
+═══════════════════════════════════════
+
+GOOD startScene: "Ocean, a cheerful 3-year-old with short brown hair and star pajamas, crouches in a sunny backyard garden, eyes wide with wonder, looking at a small red toy car that's beginning to glow with golden sparkles."
+
+BAD startScene: "A child stands in a meadow with cute animals." (generic, not from story)
+
+═══════════════════════════════════════
+RESPONSE FORMAT (JSON ONLY)
+═══════════════════════════════════════
+
+{
+  "mainCharacter": {
+    "name": "The child's name from the story",
+    "appearance": "Detailed visual description: age, hair color/style, clothing, expression. Make them look like a cute illustrated storybook character."
+  },
+  "supportingCharacters": [
+    {
+      "name": "Character name from story",
+      "appearance": "Visual description matching how they're described in the story"
+    }
+  ],
+  "setting": "Overall visual world/atmosphere of the story",
+  "sections": [
+    {
+      "sectionNumber": 1,
+      "title": "Short title",
+      "text": "Actual story text for this section...",
+      "startScene": "Detailed visual description of scene START. Include ${childName || "the child"}'s position, expression, surroundings, lighting, mood. 2-3 sentences.",
+      "endScene": "Detailed visual description of scene END. Show the transition moment. Should connect to next section's start. 2-3 sentences.",
+      "cameraMovement": "Camera direction: slow zoom in / gentle pan right / floating upward / etc."
+    },
+    // ... 3 more sections
+  ]
+}`;
+
+  const response = await fetch(`${BASE_URL}?key=${GEMINI_API_KEY}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      contents: [
+        {
+          parts: [
+            {
+              text: userPrompt,
+            },
+          ],
+        },
+      ],
+      generationConfig: {
+        temperature: 0.7, // Lower for more faithful extraction
+        maxOutputTokens: 6000,
+        topP: 0.9,
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Gemini API failed: ${error}`);
+  }
+
+  const data = await response.json();
+  const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+  if (!content) {
+    throw new Error("No content in Gemini response");
+  }
+
+  // Parse JSON from response
+  let jsonStr = content.trim();
+  if (jsonStr.includes("```json")) {
+    jsonStr = jsonStr.split("```json")[1].split("```")[0].trim();
+  } else if (jsonStr.includes("```")) {
+    jsonStr = jsonStr.split("```")[1].split("```")[0].trim();
+  }
+
+  try {
+    const result = JSON.parse(jsonStr) as VideoStoryAnalysis;
+
+    console.log("\n=== Story Analysis Complete ===");
+    console.log(`Main character: ${result.mainCharacter.name}`);
+    console.log(`Supporting characters: ${result.supportingCharacters.length}`);
+    console.log(`Sections: ${result.sections.length}`);
+
+    return result;
+  } catch (e) {
+    console.error("Failed to parse Gemini analysis response:", e);
+    console.error("Raw response:", content);
+    throw new Error("Failed to parse story analysis from Gemini");
   }
 }

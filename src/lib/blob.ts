@@ -186,6 +186,77 @@ export async function uploadProfileImage(
 }
 
 /**
+ * Upload a video file to Cloudflare R2
+ */
+export async function uploadVideo(
+  buffer: Buffer,
+  storyId: string,
+  type: "section" | "final",
+  sectionNumber?: number,
+  metadata?: {
+    childName?: string;
+    theme?: string;
+  }
+): Promise<string> {
+  const sanitize = (str: string) =>
+    str
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "-")
+      .slice(0, 20);
+
+  let filename: string;
+  const timestamp = Date.now();
+
+  if (metadata?.childName) {
+    const childName = sanitize(metadata.childName);
+    const theme = metadata.theme ? sanitize(metadata.theme) : "story";
+    if (type === "section" && sectionNumber !== undefined) {
+      filename = `${childName}_${theme}_section${sectionNumber}_${timestamp}.mp4`;
+    } else {
+      filename = `${childName}_${theme}_final_${timestamp}.mp4`;
+    }
+  } else {
+    if (type === "section" && sectionNumber !== undefined) {
+      filename = `${storyId}_section${sectionNumber}_${timestamp}.mp4`;
+    } else {
+      filename = `${storyId}_final_${timestamp}.mp4`;
+    }
+  }
+
+  const key = `voice-stories/videos/${type}/${filename}`;
+  console.log(`Uploading ${type} video: ${key}`);
+
+  return uploadToR2(buffer, key, "video/mp4");
+}
+
+/**
+ * Upload a video from URL to Cloudflare R2
+ * Downloads from the source URL and re-uploads to R2
+ */
+export async function uploadVideoFromUrl(
+  sourceUrl: string,
+  storyId: string,
+  type: "section" | "final",
+  sectionNumber?: number,
+  metadata?: {
+    childName?: string;
+    theme?: string;
+  }
+): Promise<string> {
+  console.log(`Downloading video from: ${sourceUrl}`);
+
+  const response = await fetch(sourceUrl);
+  if (!response.ok) {
+    throw new Error(`Failed to download video: ${response.statusText}`);
+  }
+
+  const buffer = Buffer.from(await response.arrayBuffer());
+  console.log(`Downloaded video: ${buffer.length} bytes`);
+
+  return uploadVideo(buffer, storyId, type, sectionNumber, metadata);
+}
+
+/**
  * Delete a file from Cloudflare R2
  */
 export async function deleteFile(url: string): Promise<void> {

@@ -5,6 +5,28 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { usePlayer } from "@/components/player/PlayerProvider";
 
+interface StorySection {
+  sectionNumber: number;
+  title: string;
+  text: string;
+  cinematicDescription: string;
+  startImageUrl?: string;
+  endImageUrl?: string;
+  videoUrl?: string;
+  videoDurationSeconds?: number;
+}
+
+interface VideoProgress {
+  step: "analyzing" | "images" | "videos" | "uploading" | "complete";
+  stepNumber: number;
+  totalSteps: number;
+  currentItem?: number;
+  totalItems?: number;
+  message: string;
+  startedAt?: string;
+  updatedAt?: string;
+}
+
 interface StoryData {
   _id: string;
   childName: string;
@@ -16,6 +38,11 @@ interface StoryData {
   previewUrl?: string;
   status: string;
   coverImageUrl?: string;
+  // Video fields
+  videoMode?: boolean;
+  videoStatus?: "pending" | "generating" | "complete" | "failed";
+  storySections?: StorySection[];
+  finalVideoUrl?: string;
 }
 
 const THEME_GRADIENT_CSS: Record<string, string> = {
@@ -44,6 +71,9 @@ export default function StoryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [videoGenerating, setVideoGenerating] = useState(false);
+  const [videoError, setVideoError] = useState<string | null>(null);
+  const [videoProgress, setVideoProgress] = useState<VideoProgress | null>(null);
 
   const { dispatch } = usePlayer();
 
@@ -68,6 +98,46 @@ export default function StoryPage() {
 
     fetchStory();
   }, [storyId]);
+
+  // Poll for video generation progress
+  useEffect(() => {
+    if (!videoGenerating && story?.videoStatus !== "generating") return;
+
+    const pollProgress = async () => {
+      try {
+        const res = await fetch(`/api/story/${storyId}/generate-video`);
+        if (!res.ok) return;
+
+        const data = await res.json();
+
+        if (data.progress) {
+          setVideoProgress(data.progress);
+        }
+
+        if (data.videoStatus === "complete") {
+          setVideoGenerating(false);
+          setVideoProgress(null);
+          // Refresh the story data
+          const storyRes = await fetch(`/api/story/${storyId}`);
+          if (storyRes.ok) {
+            const storyData = await storyRes.json();
+            setStory(storyData);
+          }
+        } else if (data.videoStatus === "failed") {
+          setVideoGenerating(false);
+          setVideoError("Video generation failed");
+          setVideoProgress(null);
+        }
+      } catch (err) {
+        console.error("Failed to poll progress:", err);
+      }
+    };
+
+    const interval = setInterval(pollProgress, 2000);
+    pollProgress(); // Initial poll
+
+    return () => clearInterval(interval);
+  }, [storyId, videoGenerating, story?.videoStatus]);
 
   const handlePlay = () => {
     if (!story) return;
@@ -94,6 +164,44 @@ export default function StoryPage() {
 
   const toggleFavorite = () => {
     setIsFavorite(!isFavorite);
+  };
+
+  const handleGenerateVideo = async () => {
+    if (!story) return;
+
+    setVideoGenerating(true);
+    setVideoError(null);
+
+    try {
+      const res = await fetch(`/api/story/${storyId}/generate-video`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ videoDuration: 5 }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to generate video");
+      }
+
+      const data = await res.json();
+
+      // Update story with video data
+      setStory((prev) =>
+        prev
+          ? {
+              ...prev,
+              videoMode: true,
+              videoStatus: "complete",
+              storySections: data.sections,
+            }
+          : null
+      );
+    } catch (err) {
+      setVideoError(err instanceof Error ? err.message : "Failed to generate video");
+    } finally {
+      setVideoGenerating(false);
+    }
   };
 
   if (loading) {
@@ -295,6 +403,167 @@ export default function StoryPage() {
             </svg>
             Download Story
           </a>
+        )}
+
+        {/* Video Section */}
+        {isComplete && (
+          <div className="dark-card p-5 mb-4">
+            <h2 className="font-semibold mb-3 flex items-center gap-2">
+              <span>Video Story</span>
+              {story.videoStatus === "complete" && (
+                <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">Ready</span>
+              )}
+            </h2>
+
+            {/* Video not generated yet */}
+            {!story.videoMode && !videoGenerating && (
+              <div className="text-center py-4">
+                <p className="text-secondary text-sm mb-4">
+                  Transform your story into an animated video with AI-generated scenes
+                </p>
+                <button
+                  onClick={handleGenerateVideo}
+                  className="btn-purple w-full flex items-center justify-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  Create Video Story (~$6.50)
+                </button>
+                <p className="text-secondary text-xs mt-2">Takes 10-15 minutes</p>
+              </div>
+            )}
+
+            {/* Video generating */}
+            {(videoGenerating || story.videoStatus === "generating") && (
+              <div className="py-4">
+                {/* Step progress indicators */}
+                <div className="flex items-center justify-between mb-6 px-2">
+                  {[
+                    { step: "analyzing", label: "Analyze", icon: "🔍" },
+                    { step: "images", label: "Images", icon: "🖼️" },
+                    { step: "videos", label: "Videos", icon: "🎬" },
+                    { step: "complete", label: "Done", icon: "✅" },
+                  ].map((s, index) => {
+                    const currentStep = videoProgress?.step || "analyzing";
+                    const steps = ["analyzing", "images", "videos", "uploading", "complete"];
+                    const currentIndex = steps.indexOf(currentStep);
+                    const stepIndex = steps.indexOf(s.step);
+                    const isActive = s.step === currentStep || (s.step === "videos" && currentStep === "uploading");
+                    const isCompleted = stepIndex < currentIndex || (s.step === "videos" && currentStep === "complete");
+
+                    return (
+                      <div key={s.step} className="flex flex-col items-center flex-1">
+                        <div
+                          className={`w-10 h-10 rounded-full flex items-center justify-center text-lg mb-1 transition-all ${
+                            isActive
+                              ? "bg-purple-500 ring-2 ring-purple-400 ring-offset-2 ring-offset-[#1a1625]"
+                              : isCompleted
+                              ? "bg-green-500"
+                              : "bg-white/10"
+                          }`}
+                        >
+                          {isCompleted ? "✓" : isActive ? (
+                            <span className="animate-pulse-soft">{s.icon}</span>
+                          ) : (
+                            s.icon
+                          )}
+                        </div>
+                        <span className={`text-xs ${isActive ? "text-white font-medium" : "text-secondary"}`}>
+                          {s.label}
+                        </span>
+                        {/* Progress line between steps */}
+                        {index < 3 && (
+                          <div
+                            className={`absolute h-0.5 w-[calc(25%-20px)] ${
+                              isCompleted ? "bg-green-500" : "bg-white/10"
+                            }`}
+                            style={{ transform: `translateX(${50 + index * 100}%)` }}
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Current step details */}
+                <div className="text-center bg-white/5 rounded-lg p-4">
+                  <div className="mb-3">
+                    <div className="relative inline-block">
+                      <div className="spinner mx-auto" style={{ width: 40, height: 40, borderWidth: 3 }} />
+                    </div>
+                  </div>
+                  <p className="text-white font-medium mb-1">
+                    {videoProgress?.message || "Starting video generation..."}
+                  </p>
+
+                  {/* Item progress bar */}
+                  {videoProgress?.totalItems && videoProgress.currentItem !== undefined && (
+                    <div className="mt-3">
+                      <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+                        <div
+                          className="bg-purple-500 h-full rounded-full transition-all duration-300"
+                          style={{
+                            width: `${(videoProgress.currentItem / videoProgress.totalItems) * 100}%`,
+                          }}
+                        />
+                      </div>
+                      <p className="text-secondary text-xs mt-1">
+                        {videoProgress.currentItem} of {videoProgress.totalItems}
+                      </p>
+                    </div>
+                  )}
+
+                  <p className="text-secondary text-xs mt-2">
+                    {videoProgress?.step === "videos" || videoProgress?.step === "uploading"
+                      ? "Each video takes 2-4 minutes"
+                      : "Please wait..."}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Video error */}
+            {videoError && (
+              <div className="text-center py-4">
+                <div className="text-4xl mb-3">😔</div>
+                <p className="text-red-400 text-sm mb-2">{videoError}</p>
+                <button
+                  onClick={handleGenerateVideo}
+                  className="text-purple-400 text-sm font-medium"
+                >
+                  Try again
+                </button>
+              </div>
+            )}
+
+            {/* Video sections ready */}
+            {story.videoStatus === "complete" && story.storySections && story.storySections.length > 0 && (
+              <div className="space-y-4">
+                {story.storySections.map((section) => (
+                  <div key={section.sectionNumber} className="bg-white/5 rounded-lg overflow-hidden">
+                    <div className="p-3 border-b border-white/10">
+                      <h3 className="font-medium text-sm">
+                        Part {section.sectionNumber}: {section.title}
+                      </h3>
+                    </div>
+                    {section.videoUrl ? (
+                      <video
+                        src={section.videoUrl}
+                        controls
+                        className="w-full aspect-video bg-black"
+                        poster={section.startImageUrl}
+                      />
+                    ) : (
+                      <div className="aspect-video bg-black/50 flex items-center justify-center">
+                        <span className="text-secondary text-sm">Video not available</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         )}
 
         {/* Create Another - Only when complete */}
