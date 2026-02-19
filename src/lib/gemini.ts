@@ -962,6 +962,20 @@ async function callGeminiForSections(userPrompt: string): Promise<StoryWithSecti
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
+ * FFmpeg-compatible camera movement for Ken Burns effect
+ */
+export interface FFmpegCameraMovement {
+  effect: 'zoom-in' | 'zoom-out' | 'pan-left' | 'pan-right' | 'pan-up' | 'pan-down';
+  startZoom: number;    // 1.0 = normal, 1.5 = 50% zoomed in
+  endZoom: number;
+  startX: number;       // 0-1 normalized position (0.5 = center)
+  startY: number;
+  endX: number;
+  endY: number;
+  easing: 'linear' | 'ease-in' | 'ease-out';
+}
+
+/**
  * Analysis result for video generation from existing story
  */
 export interface VideoStoryAnalysis {
@@ -981,6 +995,7 @@ export interface VideoStoryAnalysis {
     startScene: string;
     endScene: string;
     cameraMovement: string;
+    ffmpegCamera: FFmpegCameraMovement; // For FFmpeg Ken Burns effect
   }>;
 }
 
@@ -1035,6 +1050,7 @@ YOUR TASK
    - startScene: A detailed visual description of what we SEE at the START of this section
    - endScene: A detailed visual description of what we SEE at the END of this section
    - cameraMovement: How the camera should move (slow zoom, gentle pan, floating, etc.)
+   - ffmpegCamera: Precise camera movement parameters for Ken Burns effect (see below)
 
 ═══════════════════════════════════════
 CRITICAL RULES FOR VISUAL DESCRIPTIONS
@@ -1060,10 +1076,40 @@ CRITICAL RULES FOR VISUAL DESCRIPTIONS
    - Nothing scary or dark
 
 ═══════════════════════════════════════
+FFMPEG CAMERA PARAMETERS (Ken Burns Effect)
+═══════════════════════════════════════
+
+For each section, provide ffmpegCamera with these parameters:
+
+- effect: One of "zoom-in", "zoom-out", "pan-left", "pan-right", "pan-up", "pan-down"
+- startZoom: Starting zoom level (1.0 = normal, 1.3 = 30% zoomed in)
+- endZoom: Ending zoom level
+- startX, startY: Starting focus point (0-1 normalized, 0.5 = center)
+- endX, endY: Ending focus point
+- easing: "linear", "ease-in", or "ease-out"
+
+GUIDELINES for camera movement:
+- Section 1 (intro): Use "zoom-in" to draw viewer in, focus on character (startX: 0.5, startY: 0.4)
+- Section 2 (discovery): Use "pan-right" or "pan-left" to show exploration
+- Section 3 (climax): Use "zoom-in" with faster movement for excitement
+- Section 4 (peaceful end): Use "zoom-out" to show peaceful scene, ease-out for calming
+
+═══════════════════════════════════════
 EXAMPLE (for a story about "Ocean and a magic car")
 ═══════════════════════════════════════
 
 GOOD startScene: "Ocean, a cheerful 3-year-old with short brown hair and star pajamas, crouches in a sunny backyard garden, eyes wide with wonder, looking at a small red toy car that's beginning to glow with golden sparkles."
+
+GOOD ffmpegCamera: {
+  "effect": "zoom-in",
+  "startZoom": 1.0,
+  "endZoom": 1.3,
+  "startX": 0.5,
+  "startY": 0.5,
+  "endX": 0.45,
+  "endY": 0.4,
+  "easing": "ease-out"
+}
 
 BAD startScene: "A child stands in a meadow with cute animals." (generic, not from story)
 
@@ -1090,9 +1136,19 @@ RESPONSE FORMAT (JSON ONLY)
       "text": "Actual story text for this section...",
       "startScene": "Detailed visual description of scene START. Include ${childName || "the child"}'s position, expression, surroundings, lighting, mood. 2-3 sentences.",
       "endScene": "Detailed visual description of scene END. Show the transition moment. Should connect to next section's start. 2-3 sentences.",
-      "cameraMovement": "Camera direction: slow zoom in / gentle pan right / floating upward / etc."
+      "cameraMovement": "Camera direction: slow zoom in / gentle pan right / floating upward / etc.",
+      "ffmpegCamera": {
+        "effect": "zoom-in",
+        "startZoom": 1.0,
+        "endZoom": 1.3,
+        "startX": 0.5,
+        "startY": 0.5,
+        "endX": 0.45,
+        "endY": 0.4,
+        "easing": "ease-out"
+      }
     },
-    // ... 3 more sections
+    // ... 3 more sections with different camera movements
   ]
 }`;
 

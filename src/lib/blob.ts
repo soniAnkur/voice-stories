@@ -230,6 +230,33 @@ export async function uploadVideo(
 }
 
 /**
+ * Upload a video from local file path to Cloudflare R2
+ * Reads from the local filesystem and uploads to R2
+ */
+export async function uploadVideoFromPath(
+  filePath: string,
+  storyId: string,
+  type: "section" | "final",
+  sectionNumber?: number,
+  metadata?: {
+    childName?: string;
+    theme?: string;
+  }
+): Promise<string> {
+  const fs = await import("fs").then((m) => m.promises);
+
+  console.log(`Reading video from: ${filePath}`);
+
+  const buffer = await fs.readFile(filePath);
+  console.log(`Read video: ${buffer.length} bytes`);
+
+  // Clean up the local file after reading
+  await fs.unlink(filePath).catch(() => {});
+
+  return uploadVideo(buffer, storyId, type, sectionNumber, metadata);
+}
+
+/**
  * Upload a video from URL to Cloudflare R2
  * Downloads from the source URL and re-uploads to R2
  */
